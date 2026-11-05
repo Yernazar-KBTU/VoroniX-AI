@@ -124,4 +124,18 @@ describe("CRM brain", () => {
     expect(ev.kind).toBe("message");
     expect(ev.detail).toMatchObject({ from: "crm", name: "Aidos", text: "Сколько стоит VIP ритуал?" });
   });
+
+  it("draws a message the AI answered on the server, when it arrives in the shared store", async () => {
+    const store = new MemoryStore();
+    const site = new Live(store, seed, undefined, brain.model);
+    await site.start();
+    const drawn: { text: string }[] = [];
+    site.on("processed", (d) => drawn.push(d as { text: string }));
+    // Written by the AI on the server (another Live on the same data).
+    await store.put("events", { id: "ev-server-1", at: Date.now(), kind: "message", title: "Dana: адрес", detail: { name: "Dana", channel: "telegram", text: "Где вы находитесь?", reply: "Мы находимся по адресу…", labels: ["address"], actions: [] } });
+    expect(drawn.map((d) => d.text)).toEqual(["Где вы находитесь?"]);
+    // Its own messages are drawn once, when it answers them, not again from the store.
+    await site.receive({ name: "Aidos", channel: "telegram", text: "Сколько стоит стрижка?" });
+    expect(drawn.length).toBe(2);
+  });
 });

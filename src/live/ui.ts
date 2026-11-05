@@ -21,6 +21,8 @@ export interface Caps {
   kind: "site" | "memory";
   /** null: the platform did not say; writes are tried and a refusal switches the page to view-only. */
   canWrite: boolean | null;
+  /** Connected to the AI on the VoroniX server: the same AI that answers the CRM's clients. */
+  server?: boolean;
   save?: (filename: string, data: string) => Promise<void>;
 }
 
@@ -265,7 +267,7 @@ export function createUI(brain: Brain) {
     put(
       $("lv-store"),
       caps.kind === "site"
-        ? `<span class="pill good"><i class="dot"></i>Live · saved in this site's database${caps.canWrite === false ? " · view only" : ""}</span>`
+        ? `<span class="pill good"><i class="dot"></i>${caps.server ? "Live · the AI on the VoroniX server, answering your CRM" : "Live · saved in this site's database"}${caps.canWrite === false ? " · view only" : ""}</span>`
         : `<span class="pill warn"><i class="dot"></i>Preview · nothing is saved in this view</span>`,
     );
     put($("lv-kpis"), [

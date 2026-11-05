@@ -25,6 +25,8 @@ export interface Incoming {
   channel: Channel;
   text: string;
   handle?: string;
+  /** A stable id for the client (for example the CRM chat's messenger account); otherwise one is made from the name. */
+  clientId?: string;
   /** Known right answer (demo stream only): used to measure the AI, never to answer. */
   truth?: Label[];
 }
@@ -160,7 +162,14 @@ export class Live {
       this.entries = rows as unknown as KnowledgeEntry[];
       this.knowledge.set(this.entries, this.business);
     });
-    w("events", (rows) => (this.events = (rows as unknown as LiveEvent[]).sort((a, b) => a.at - b.at)));
+    this.stops.push(
+      this.store.watch("events", (rows, changes) => {
+        this.events = (rows as unknown as LiveEvent[]).sort((a, b) => a.at - b.at);
+        // A message answered somewhere else (the AI on the server, for the CRM): draw it here too.
+        for (const ch of changes) if (ch.type === "added" && !this.mine.has(ch.row.id)) this.remote(ch.row as unknown as LiveEvent);
+        this.emit("change", "events");
+      }),
+    );
     w("settings", (rows) => {
       this.applySettings(rows);
       this.knowledge.set(this.entries, this.business);
@@ -174,8 +183,23 @@ export class Live {
     if (prefs?.retrainEvery) this.retrainEvery = prefs.retrainEvery;
   }
 
+  /** Events this page wrote itself: the others came from another place and are drawn when they arrive. */
+  private mine = new Set<string>();
+
+  private remote(e: LiveEvent) {
+    if (e.kind !== "message" || !this.listeners.get("processed")?.size || Date.now() - e.at > 60_000) return;
+    const d = (e.detail ?? {}) as Record<string, any>;
+    if (typeof d.text !== "string") return;
+    const t0 = performance.now();
+    const prediction = this.learner.model.predict(d.text);
+    const model = performance.now() - t0;
+    const outcome = { prediction, lang: prediction.lang, labels: d.labels ?? prediction.intents.map((i) => i.label), unsure: !!d.unsure, reply: String(d.reply ?? ""), actions: d.actions ?? [], learn: [], queue: [] } as unknown as Outcome;
+    this.emit("processed", { name: String(d.name ?? ""), channel: d.channel as Channel, text: d.text, fwd: this.learner.model.forward(d.text), outcome, ms: { model, agent: model } } satisfies Processed);
+  }
+
   private async log(kind: LiveEvent["kind"], title: string, detail?: Record<string, unknown>): Promise<LiveEvent> {
     const e: LiveEvent = { id: newId("ev"), at: Date.now(), kind, title, ...(detail ? { detail: JSON.parse(JSON.stringify(detail)) } : {}) };
+    this.mine.add(e.id);
     this.events.push(e);
     await this.store.put("events", toRow(e));
     // The site's database holds at most 25 000 documents: keep the newest 1 500 events.
@@ -192,7 +216,10 @@ export class Live {
   receive(input: Incoming): Promise<Received> {
     return this.serial(async () => {
       const at = Date.now();
-      const client = this.clientFor(input.name, input.channel, input.handle, ruleLang(input.text) ?? "ru");
+      const known = input.clientId ? this.clients.get(input.clientId) : undefined;
+      const client = input.clientId
+        ? (known ? { ...known, name: input.name || known.name } : newClient(input.clientId, input.name, input.channel, input.handle ?? "", ruleLang(input.text) ?? "ru", Date.now()))
+        : this.clientFor(input.name, input.channel, input.handle, ruleLang(input.text) ?? "ru");
       const t0 = performance.now();
       const outcome = respond(this.ctx(), client, input.text, at);
       const agent = performance.now() - t0;

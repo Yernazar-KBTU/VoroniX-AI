@@ -5,13 +5,18 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY tsconfig.json tsconfig.build.json ./
 COPY src src
-RUN npm run build
+COPY scripts scripts
+COPY data data
+COPY reports reports
+# The server, and the VoroniX AI site it shows at /live.
+RUN npm run build && npm run build:demo
 
 FROM node:22-alpine
 ENV NODE_ENV=production PORT=4000
 WORKDIR /app
 COPY package.json ./
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/dist-demo ./dist-demo
 COPY data ./data
 COPY reports ./reports
 COPY public ./public
