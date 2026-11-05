@@ -3,6 +3,7 @@
 // conversations prove and from what people teach it, and keeps everything in
 // the store. Every open page runs the same code on the same saved data, so
 // they all see the same AI, live.
+import type { CrmLiveMessage } from "../crm-brain.js";
 import type { Example, Label, Lang } from "../data.js";
 import type { Forward, IntentModel } from "../model.js";
 import { respond, type Outcome } from "./agent.js";
@@ -234,6 +235,53 @@ export class Live {
       });
       this.maybeRetrain();
       return { outcome, client: outcome.client, learned, queued };
+    });
+  }
+
+  /**
+   * A message the CRM page answered (another tab of the same site, see
+   * CrmBrain.broadcast). Shown in the live feed and drawn in Real time. The
+   * CRM keeps its own brain: nothing here is learned or saved in the CRM.
+   */
+  fromCrm(m: CrmLiveMessage): Promise<void> {
+    return this.serial(async () => {
+      const p = m.processed;
+      const outcome = p.outcome;
+      this.emit("processed", { name: p.name, channel: p.channel as Channel, text: p.text, fwd: p.fwd, outcome, ms: p.ms } satisfies Processed);
+      await this.log("message", `${p.name}: ${p.text}`, {
+        from: "crm",
+        name: p.name,
+        channel: p.channel,
+        text: p.text,
+        lang: outcome.lang,
+        intents: outcome.prediction.intents.map((i) => ({ label: i.label, score: Math.round(i.score * 1000) / 1000 })),
+        labels: outcome.labels,
+        unsure: outcome.unsure,
+        reply: outcome.reply,
+        actions: outcome.actions,
+        learned: m.lessons.length,
+        queued: outcome.queue.map((q) => q.kind),
+        ...(outcome.hit ? { source: outcome.hit.entry.title } : {}),
+      });
+      for (const x of m.lessons) {
+        this.emit("lesson", x satisfies Lesson);
+        const r = x.result;
+        const best = r.before.intents[0];
+        await this.log("learn", `The CRM learned «${x.phrase.text}» → ${x.phrase.labels.join(" + ")}`, {
+          from: "crm",
+          text: x.phrase.text,
+          labels: x.phrase.labels,
+          source: x.phrase.source,
+          why: x.phrase.why,
+          steps: r.steps,
+          newFeatures: r.newFeatures,
+          correct: r.correct,
+          before: { label: best.label, score: Math.round(best.score * 1000) / 1000, labels: r.before.intents.map((i) => i.label) },
+          after: Object.fromEntries(x.phrase.labels.map((l) => [l, Math.round(r.after[l] * 1000) / 1000])),
+          was: Object.fromEntries(x.phrase.labels.map((l) => [l, Math.round(r.before.scores[l] * 1000) / 1000])),
+          changes: r.changes.slice(0, 6).map((c) => ({ f: c.feature, l: c.label, from: Math.round(c.from * 1000) / 1000, to: Math.round(c.to * 1000) / 1000 })),
+        });
+      }
     });
   }
 
