@@ -106,6 +106,27 @@ node scripts/e2e-demo.cjs <screenshots> # the whole site in Chromium, with a sta
 
 Limits: the inbox is simulated until the CRM server forwards real messages; the AI runs while the page is open; it answers about the salon from its data and knowledge, and sends any other question to a person.
 
+## The brain for a CRM page
+
+`npm run build:brain` builds `dist-brain/voronix-brain.js` (about 115 KB), the
+same AI as one script for any web page. The VoroniX CRM demo uses it
+([`site/`](https://github.com/Yernazar-KBTU/VoroniX/tree/main/site)):
+
+```js
+const brain = await VoronixBrain.create(JSON.parse(localStorage.getItem("vx-brain-v1")));
+brain.onChange = (state) => localStorage.setItem("vx-brain-v1", JSON.stringify(state));
+const r = brain.reply({ client: { id: "chat:1", name: "Aliya", channel: "Telegram" }, text, business, bookings, knowledge });
+// r.outcome.reply: the answer in the client's language
+// r.book / r.cancel / r.handoff: what the CRM should do; r.question: saved for a person
+```
+
+It learns without anyone ([`src/crm-brain.ts`](src/crm-brain.ts)):
+
+1. When a conversation proves what a message meant (a booking, a cancel, a thank-you after an answer), the phrase is learned at once.
+2. A question it cannot answer waits for a person; the answer becomes knowledge and the AI uses it from the next message.
+3. Every 50 new phrases it retrains on everything and keeps the new version only if it is not worse on phrases it never trained on.
+4. What it learned is plain JSON (`brain.state()`); loading it rebuilds exactly the same model.
+
 ## Run
 
 ```bash
