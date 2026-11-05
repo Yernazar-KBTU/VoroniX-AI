@@ -3,7 +3,7 @@ import type { Brain } from "./service.js";
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
-const LABEL_NAMES: Record<string, string> = {
+export const LABEL_NAMES: Record<string, string> = {
   greeting: "Greeting",
   price: "Asks the price",
   booking: "Wants to book",
@@ -25,113 +25,134 @@ const EXAMPLES = [
   "Yes, that time works, thanks!",
 ];
 
-/** The service's home page: try the model, see how good it is, read the API. */
+/** The service's site: try the model, look inside it, watch it train, see how data is kept, read the API. */
 export function page(brain: Brain): string {
   const r = brain.report;
   const rows = Object.entries(r.holdout.per_label)
     .map(([l, m]) => `<tr><td>${esc(LABEL_NAMES[l] ?? l)} <code>${esc(l)}</code></td><td>${m.support}</td><td>${pct(m.precision)}</td><td>${pct(m.recall)}</td><td><b>${pct(m.f1)}</b></td></tr>`)
     .join("");
+  const chips = EXAMPLES.map((e) => `<button class="chip" type="button">${esc(e)}</button>`).join("");
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VoroniX AI</title>
-<style>
-:root{--bg:#f6f7fb;--card:#fff;--ink:#14172b;--muted:#5d637e;--line:#e3e6f0;--accent:#5b4bff;--accent2:#00b8a9;--soft:#eeecff}
-@media (prefers-color-scheme:dark){:root{--bg:#0d0f1c;--card:#161a2e;--ink:#eef0fb;--muted:#a3a8c3;--line:#272c47;--accent:#8b7dff;--accent2:#2dd4c4;--soft:#211f45}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.wrap{max-width:980px;margin:0 auto;padding:0 16px}
-header{display:flex;align-items:center;gap:12px;padding:22px 0}
-.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;color:#fff;font-weight:800}
-header b{font-size:20px}header span{color:var(--muted);font-size:14px;margin-left:auto}
-h1{font-size:clamp(28px,5vw,44px);line-height:1.15;margin:28px 0 12px}h2{font-size:24px;margin:0 0 14px}
-.lead{color:var(--muted);font-size:18px;max-width:720px}
-section{margin:34px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
-textarea{width:100%;min-height:84px;border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
-button{border:0;border-radius:12px;background:var(--accent);color:#fff;font:600 15px system-ui;padding:11px 18px;cursor:pointer}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.chip{background:var(--soft);color:var(--ink);font-weight:500;padding:7px 12px;border-radius:999px;font-size:14px}
-.bars{margin-top:16px;display:grid;gap:7px}.bar{display:grid;grid-template-columns:170px 1fr 52px;align-items:center;gap:10px;font-size:14px}
-.track{height:10px;border-radius:6px;background:var(--line);overflow:hidden}.fill{height:100%;background:var(--accent);border-radius:6px}.on .fill{background:var(--accent2)}.on{font-weight:700}
-.result{margin-top:14px;font-size:15px}.tag{display:inline-block;background:var(--accent2);color:#04231f;border-radius:8px;padding:2px 9px;margin:2px;font-weight:700}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
-.stat b{display:block;font-size:30px}.stat span{color:var(--muted);font-size:14px}
-table{width:100%;border-collapse:collapse;font-size:14px}td,th{text-align:left;padding:8px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:600}
-.table{overflow-x:auto}code,pre{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}code{background:var(--soft);padding:1px 5px;border-radius:5px}
-pre{background:#0b0d18;color:#dfe3ff;border-radius:14px;padding:16px;overflow-x:auto}
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}.steps .card{padding:18px}.steps i{font-style:normal;color:var(--accent);font-weight:800}
-.note{color:var(--muted);font-size:14px}footer{color:var(--muted);font-size:14px;padding:30px 0 40px}
-</style>
+<link rel="stylesheet" href="/app.css">
 </head>
 <body>
 <div class="wrap">
 <header><div class="logo">V</div><b>VoroniX AI</b><span>model ${esc(brain.info.name)} v${esc(brain.info.version)}</span></header>
+<nav class="tabs" role="tablist">
+<a href="#try" data-tab="try">Try it</a><a href="#inside" data-tab="inside">Inside the model</a><a href="#training" data-tab="training">Training</a><a href="#data" data-tab="data">Data &amp; storage</a><a href="#api" data-tab="api">API</a>
+</nav>
 
-<h1>Our own AI that understands salon clients</h1>
-<p class="lead">VoroniX AI reads a client's message in Russian, Kazakh or English and tells the CRM what the client wants: book, ask the price, cancel, complain and more. We collected the phrases, trained the model ourselves and serve it through this API. No paid AI services.</p>
+<main>
+<section id="tab-try" class="tab">
+<div class="hero"><div class="stage"><canvas id="net" aria-label="The strongest connections of the trained model"></canvas>
+<div class="hero-text"><h1>Our own AI that understands salon clients</h1>
+<p class="lead">VoroniX AI reads a client's message in Russian, Kazakh or English and tells the CRM what the client wants: book, ask the price, cancel, complain and more. We collected the phrases, trained the model ourselves and serve it through this API. No paid AI services.</p></div></div>
+<p class="caption">Above: the ${"900"} strongest connections of the trained model. Each line joins a word or word piece (left) to an intent (right). Teal pushes the intent up, pink pushes it down.</p></div>
 
-<section class="card">
+<div class="card">
 <h2>Try it</h2>
 <textarea id="t" maxlength="1000" placeholder="Write like a client would">${esc(EXAMPLES[0])}</textarea>
-<div class="chips">${EXAMPLES.map((e) => `<button class="chip" type="button">${esc(e)}</button>`).join("")}</div>
+<div class="chips" data-for="t">${chips}</div>
 <button id="go" type="button">Understand</button>
 <div class="result" id="res"></div><div class="bars" id="bars"></div>
-</section>
+</div>
 
-<section>
-<h2>How good it is</h2>
+<h2 class="h2">How good it is</h2>
 <p class="note">Measured only on phrases the model never saw during training. Holdout: trained on ${r.holdout.train_examples} phrases, tested on ${r.holdout.examples}. Cross-validation: the data is split into ${r.cross_validation.folds} parts and every part is tested once.</p>
 <div class="stats">
 <div class="stat"><b>${r.dataset.phrases}</b><span>training phrases (${Object.entries(r.dataset.by_language).map(([k, v]) => `${k} ${v}`).join(", ")})</span></div>
-<div class="stat"><b>${pct(r.cross_validation.exact_match)}</b><span>messages understood exactly right (cross-validation)</span></div>
-<div class="stat"><b>${pct(r.cross_validation.micro_f1)}</b><span>F1 over all intents (cross-validation)</span></div>
+<div class="stat"><b>${pct(r.cross_validation.exact_match)}</b><span>messages understood exactly right</span></div>
+<div class="stat"><b>${pct(r.cross_validation.micro_f1)}</b><span>F1 over all intents</span></div>
 <div class="stat"><b>${pct(r.cross_validation.language_accuracy)}</b><span>language detected right</span></div>
 </div>
-<div class="card table" style="margin-top:12px"><table><tr><th>Intent (holdout)</th><th>Phrases</th><th>Precision</th><th>Recall</th><th>F1</th></tr>${rows}</table></div>
+<div class="card table"><table><tr><th>Intent (holdout)</th><th>Phrases</th><th>Precision</th><th>Recall</th><th>F1</th></tr>${rows}</table></div>
 </section>
 
-<section>
-<h2>How it works</h2>
-<div class="steps">
-<div class="card"><i>1. Data.</i> ${r.dataset.phrases} real-style client messages, each marked with what the client wants and the language.</div>
-<div class="card"><i>2. Features.</i> Words, word pairs and word pieces of 3 to 5 letters, so Kazakh and Russian endings and typos still match.</div>
-<div class="card"><i>3. Model.</i> Logistic regression written from scratch: one classifier per intent (a message can have several) and one for the language.</div>
-<div class="card"><i>4. API.</i> The VoroniX CRM sends each client message here. If this service is down, the CRM falls back to its built-in rules.</div>
+<section id="tab-inside" class="tab" hidden>
+<h1>Inside the model</h1>
+<p class="lead">Write a message and watch how the model decides. Nothing here is drawn for show: every line is a real weight of the trained model.</p>
+<div class="card">
+<textarea id="t2" maxlength="1000">${esc(EXAMPLES[0])}</textarea>
+<div class="chips" data-for="t2">${chips}</div>
+<button id="go2" type="button">Show the decision</button>
+</div>
+<div class="step"><span class="num">1</span><div><h3>Cut the message into features</h3><p class="note">Whole words, pairs of words, the first 4 letters of long words, and pieces of 3 to 5 letters. Pieces let the model recognise «қанша» inside «қаншадан» or a typo. The signs Features the model never saw in training are ignored.</p>lt; and Features the model never saw in training are ignored.</p>gt; mark the start and end of a word. Features the model never saw in training are ignored.</p><div id="feats" class="feats"></div></div></div>
+<div class="step"><span class="num">2</span><div><h3>Every feature votes for or against every intent</h3><p class="note">The strongest features of this message on the left, the 10 intents on the right. Teal lines vote for, pink lines against; a thicker line is a stronger vote. The circle grows with the intent's score.</p><div class="card vis"><svg id="flow" viewBox="0 0 900 540" role="img" aria-label="How the features of the message vote for each intent"></svg></div></div></div>
+<div class="step"><span class="num">3</span><div><h3>Add up the votes and turn them into a probability</h3><p class="note">For each intent: start value (bias) + sum of votes = z, then the sigmoid 1 / (1 + e<sup>−z</sup>) turns z into a score from 0 to 1. Intents above 0.5 are the answer.</p><div id="math" class="card table"></div></div></div>
+</section>
+
+<section id="tab-training" class="tab" hidden>
+<h1>How it learns</h1>
+<p class="lead">Training is a loop. The model reads every phrase, guesses its intents, compares the guess with the right answer and moves each weight a little in the direction that makes the error smaller (gradient descent). One pass over all phrases is an epoch.</p>
+<div class="card"><h2>Replay of a real training run</h2>
+<p class="note" id="split"></p>
+<svg id="curve" viewBox="0 0 900 320" role="img" aria-label="Error and accuracy after every epoch"></svg>
+<div class="legend"><span><i class="sw loss"></i>Error on training phrases (log loss)</span><span><i class="sw acc"></i>Exactly right on unseen phrases</span><span><i class="sw f1"></i>F1 on unseen phrases</span></div>
+<div class="player"><button id="play" type="button">▶ Replay</button><input id="ep" type="range" min="1" max="60" value="60" aria-label="Epoch"><b id="eplabel"></b></div>
+<p class="note">How the model sees <b id="watchtext"></b> after this epoch:</p>
+<div class="bars" id="watch"></div>
+</div>
+<div class="card"><h2>Training settings</h2><div id="settings" class="kv"></div></div>
+<div class="card"><h2>The training data</h2>
+<p class="note">Every phrase the model learns from. Filter by language and intent.</p>
+<div class="filters"><select id="flang"><option value="">All languages</option><option value="ru">Russian</option><option value="kk">Kazakh</option><option value="en">English</option></select><select id="flabel"><option value="">All intents</option>${Object.entries(LABEL_NAMES).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join("")}</select><input id="fq" type="search" placeholder="Search"><span id="fcount" class="note"></span></div>
+<div class="table scroll"><table id="phrases"></table></div>
 </div>
 </section>
 
-<section>
-<h2>API</h2>
+<section id="tab-data" class="tab" hidden>
+<h1>Where the data lives</h1>
+<p class="lead">The model is small enough to be rebuilt from a text file every time the service starts. Client messages sent to the API are answered and forgotten.</p>
+<div class="pipe">
+<div class="box"><b>1. Text file</b><span>data/phrases.tsv in the GitHub repository</span><em id="s-file"></em></div><div class="arrow">→</div>
+<div class="box"><b>2. Training copies</b><span>Kazakh phrases also without Kazakh letters</span><em id="s-copies"></em></div><div class="arrow">→</div>
+<div class="box"><b>3. Vocabulary</b><span>every feature seen in training gets a number</span><em id="s-vocab"></em></div><div class="arrow">→</div>
+<div class="box"><b>4. Weights in memory</b><span>one row of numbers per intent and per language</span><em id="s-weights"></em></div>
+</div>
+<div class="grid2">
+<div class="card"><h2>One line of the data file</h2><p class="note">Language, intents, message, separated by tabs:</p><pre id="sample"></pre></div>
+<div class="card"><h2>What one row of weights looks like</h2><p class="note">Words with the biggest weights in the row of the intent «Asks the price»:</p><div id="topw" class="table"></div></div>
+</div>
+<div class="card"><h2>What is stored, and where</h2>
+<table>
+<tr><th>Thing</th><th>Where</th><th>How long</th></tr>
+<tr><td>Training phrases</td><td>data/phrases.tsv in the repository, versioned with git</td><td>Permanently, every change is in the history</td></tr>
+<tr><td>Trained weights</td><td>Memory of the running service</td><td>Until the service restarts, then trained again from the file (same data, same result)</td></tr>
+<tr><td>Quality report</td><td>reports/metrics.json in the repository</td><td>Updated by <code>npm run train</code>; a test fails if it is out of date</td></tr>
+<tr><td>Messages sent to the API</td><td>Nowhere: the text is read, answered and dropped</td><td>Not stored</td></tr>
+<tr><td>Request counter for the limit</td><td>Memory: address and count</td><td>One minute</td></tr>
+<tr><td>Client chats, bookings</td><td>The VoroniX CRM's PostgreSQL, a separate schema per business</td><td>As the business keeps them; the CRM sends only the message text here</td></tr>
+</table></div>
+</section>
+
+<section id="tab-api" class="tab" hidden>
+<h1>API</h1>
 <pre>curl -X POST ${"$"}VORONIX_AI_URL/v1/classify \\
   -H "Authorization: Bearer ${"$"}VORONIX_AI_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"text": "Сәлем! Ертеңге жазылуға бола ма?"}'</pre>
-<pre id="sample"></pre>
-<p class="note"><code>POST /v1/classify</code> takes <code>{"text"}</code> or <code>{"texts": [...]}</code> (up to 50). <code>GET /v1/model</code> returns the model and its quality report. <code>GET /health</code> for uptime checks. The key is needed only when the server sets <code>VORONIX_AI_KEY</code>. Limit: ${"120"} requests per minute per address.</p>
+<div class="card table"><table>
+<tr><th>Request</th><th>What it does</th></tr>
+<tr><td><code>POST /v1/classify</code></td><td>Intents and language of <code>{"text"}</code>, or of <code>{"texts": [...]}</code> (up to 50, 1000 characters each)</td></tr>
+<tr><td><code>POST /v1/explain</code></td><td>The features of a text and how each one voted (what the «Inside the model» tab shows)</td></tr>
+<tr><td><code>GET /v1/model</code></td><td>Model information and the quality report</td></tr>
+<tr><td><code>GET /v1/training</code></td><td>Error and accuracy after every epoch of a training replay</td></tr>
+<tr><td><code>GET /v1/dataset</code></td><td>All training phrases</td></tr>
+<tr><td><code>GET /v1/storage</code>, <code>GET /v1/network</code></td><td>Sizes of the data and weights; the strongest connections of the model</td></tr>
+<tr><td><code>GET /health</code></td><td>Uptime check</td></tr>
+</table></div>
+<p class="note">The key is needed only for the POST requests and only when the server sets <code>VORONIX_AI_KEY</code>. The site uses <code>/demo/classify</code> and <code>/demo/explain</code>, which need no key. Limit: 120 requests per minute per address.</p>
 </section>
-
+</main>
 <footer>VoroniX AI, part of the VoroniX CRM project. The model is retrained from <code>data/phrases.tsv</code> every time the service starts.</footer>
 </div>
-<script>
-const NAMES=${JSON.stringify(LABEL_NAMES)};
-const t=document.getElementById("t"),res=document.getElementById("res"),bars=document.getElementById("bars");
-async function run(){
-  res.textContent="…";
-  try{
-    const r=await fetch("/demo/classify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({text:t.value})});
-    const d=await r.json();
-    if(!r.ok){res.textContent=d.error||"Error";bars.innerHTML="";return}
-    const lang={ru:"Russian",kk:"Kazakh",en:"English"}[d.lang];
-    res.innerHTML="Language: <b>"+lang+"</b> &nbsp; Intent: "+d.intents.map(i=>'<span class="tag">'+NAMES[i.label]+'</span>').join(" ");
-    const on=new Set(d.intents.map(i=>i.label));
-    bars.innerHTML=Object.entries(d.scores).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="bar'+(on.has(k)?' on':'')+'"><span>'+NAMES[k]+'</span><div class="track"><div class="fill" style="width:'+(v*100).toFixed(1)+'%"></div></div><span>'+(v*100).toFixed(0)+'%</span></div>').join("");
-    document.getElementById("sample").textContent=JSON.stringify({model:d.model,text:d.text,intents:d.intents.map(i=>({label:i.label,score:+i.score.toFixed(3)})),lang:d.lang},null,2);
-  }catch(e){res.textContent="The service is not reachable."}
-}
-document.getElementById("go").onclick=run;
-document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{t.value=c.textContent;run()});
-run();
-</script>
+<script>window.NAMES=${JSON.stringify(LABEL_NAMES)};</script>
+<script src="/app.js"></script>
 </body>
 </html>`;
 }

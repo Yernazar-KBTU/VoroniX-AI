@@ -13,6 +13,18 @@ export interface TrainOptions {
   l2?: number;
   seed?: number;
   positiveWeight?: number;
+  /** Called after every pass over the data, with the average error and the model as it is now. */
+  onEpoch?: (epoch: number, loss: number, model: IntentModel) => void;
+}
+
+/** How each word piece of a message pushed each intent up or down. */
+export interface Explanation {
+  features: { feature: string; kind: "word" | "pair" | "start" | "piece"; known: boolean }[];
+  /** contributions[i][j]: effect of feature i on intent j (positive = for, negative = against). */
+  contributions: number[][];
+  bias: number[];
+  scores: number[];
+  unknown: number;
 }
 
 export interface Prediction {
@@ -61,7 +73,7 @@ export class IntentModel {
   }
 
   static train(examples: Example[], opts: TrainOptions = {}): IntentModel {
-    const { epochs = 60, learningRate = 1, l2 = 1e-4, seed = 7, positiveWeight = 4 } = opts;
+    const { epochs = 60, learningRate = 1, l2 = 1e-4, seed = 7, positiveWeight = 4, onEpoch } = opts;
     const vocab = [...new Set(examples.flatMap((e) => features(e.text)))].sort();
     const index = new Map(vocab.map((f, i) => [f, i]));
     const rows = examples.map((e) => ({ x: features(e.text).map((f) => index.get(f)!), e }));
@@ -74,6 +86,7 @@ export class IntentModel {
 
     for (let epoch = 0; epoch < epochs; epoch++) {
       const lr = learningRate / (1 + epoch * 0.05);
+      let loss = 0;
       for (const { x, e } of shuffle(rows, seed + epoch)) {
         const scale = 1 / Math.sqrt(x.length);
         // Intents: gradient of the log loss for every label.
@@ -81,6 +94,8 @@ export class IntentModel {
           let z = ib[l];
           for (const f of x) z += iw[l][f] * scale;
           const yes = e.labels.includes(LABELS[l]);
+          const p = Math.min(Math.max(sigmoid(z), 1e-9), 1 - 1e-9);
+          loss -= yes ? Math.log(p) : Math.log(1 - p);
           // Each label is rare (about one phrase in ten), so its positive examples weigh more.
           const g = (sigmoid(z) - (yes ? 1 : 0)) * (yes ? positiveWeight : 1);
           ib[l] -= lr * g;
@@ -95,6 +110,7 @@ export class IntentModel {
           for (const f of x) lw[k][f] -= lr * (g * scale + l2 * lw[k][f]);
         }
       }
+      onEpoch?.(epoch + 1, loss / (rows.length * L), new IntentModel({ version: "1", vocab, intent: { w: iw, b: ib }, lang: { w: lw, b: lb } }));
     }
     const round = (v: number[]) => v.map((n) => Math.round(n * 1e5) / 1e5);
     return new IntentModel({ version: "1", vocab, intent: { w: iw.map(round), b: round(ib) }, lang: { w: lw.map(round), b: round(lb) } });
@@ -106,6 +122,23 @@ export class IntentModel {
 
   get vocabularySize(): number {
     return this.json.vocab.length;
+  }
+
+  /** Opens the model up for one message: which features it found and how each one voted. */
+  explain(text: string): Explanation {
+    const all = features(text);
+    const known = all.filter((f) => this.index.has(f));
+    const scale = known.length ? 1 / Math.sqrt(known.length) : 0;
+    const kind = (f: string) => (f.startsWith("w:") ? "word" : f.startsWith("b:") ? "pair" : f.startsWith("p:") ? "start" : "piece") as Explanation["features"][number]["kind"];
+    const contributions = known.map((f) => LABELS.map((_, l) => this.json.intent.w[l][this.index.get(f)!] * scale));
+    const bias = [...this.json.intent.b];
+    const scores = LABELS.map((_, l) => sigmoid(bias[l] + contributions.reduce((s, c) => s + c[l], 0)));
+    return { features: known.map((f) => ({ feature: f.replace(/^[wbpc]:/, ""), kind: kind(f), known: true })), contributions, bias, scores, unknown: all.length - known.length };
+  }
+
+  /** Size of what the model keeps in memory. */
+  get weightCount(): number {
+    return (this.json.intent.w.length + this.json.lang.w.length) * this.json.vocab.length + this.json.intent.b.length + this.json.lang.b.length;
   }
 
   predict(text: string, threshold = 0.5): Prediction {

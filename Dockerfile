@@ -17,6 +17,7 @@ COPY --from=build /app/apps/voronix-ai/package.json ./
 COPY --from=build /app/apps/voronix-ai/dist ./dist
 COPY --from=build /app/apps/voronix-ai/data ./data
 COPY --from=build /app/apps/voronix-ai/reports ./reports
+COPY --from=build /app/apps/voronix-ai/public ./public
 EXPOSE 4000
 USER node
 CMD ["node", "dist/server.js"]

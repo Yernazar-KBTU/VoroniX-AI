@@ -1,6 +1,7 @@
 // VoroniX AI: a separate web service with its own API. It understands what a
 // client of a salon wants (intents) and in which language they write.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { page } from "./page.js";
 import { loadBrain, type Brain } from "./service.js";
@@ -42,19 +43,30 @@ export function createAiServer(opts: Options = {}): Server {
         res.setHeader("Content-Type", "text/html; charset=utf-8");
         return end(res, 200, page(brain));
       }
+      if (req.method === "GET" && (url.pathname === "/app.js" || url.pathname === "/app.css")) {
+        res.setHeader("Content-Type", url.pathname.endsWith(".js") ? "text/javascript; charset=utf-8" : "text/css; charset=utf-8");
+        res.setHeader("Cache-Control", "public, max-age=300");
+        return end(res, 200, readFileSync(new URL(`../public${url.pathname}`, import.meta.url), "utf8"));
+      }
       if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true });
       if (req.method === "GET" && url.pathname === "/v1/model") return json(res, 200, { ...brain.info, quality: brain.report });
+      if (req.method === "GET" && url.pathname === "/v1/training") return json(res, 200, brain.training());
+      if (req.method === "GET" && url.pathname === "/v1/dataset") return json(res, 200, { phrases: brain.examples });
+      if (req.method === "GET" && url.pathname === "/v1/storage") return json(res, 200, brain.storage());
+      if (req.method === "GET" && url.pathname === "/v1/network") return json(res, 200, brain.network(Number(url.searchParams.get("limit")) || undefined));
 
-      const demo = url.pathname === "/demo/classify";
-      if (req.method === "POST" && (url.pathname === "/v1/classify" || demo)) {
+      const explain = url.pathname === "/v1/explain" || url.pathname === "/demo/explain";
+      const demo = url.pathname === "/demo/classify" || url.pathname === "/demo/explain";
+      if (req.method === "POST" && (url.pathname === "/v1/classify" || explain || demo)) {
         const ip = (req.headers["x-forwarded-for"] as string | undefined)?.split(",")[0].trim() || req.socket.remoteAddress || "-";
         if (!allowed(ip)) return json(res, 429, { error: "Too many requests, try again in a minute." });
         // The try box on the home page uses /demo/classify without a key, one text at a time.
         if (!demo && opts.apiKey && req.headers.authorization !== `Bearer ${opts.apiKey}`) return json(res, 401, { error: "Missing or wrong API key." });
         const body = await readJson(req);
-        const texts: unknown[] = Array.isArray(body?.texts) && !demo ? body.texts : [body?.text];
+        const texts: unknown[] = Array.isArray(body?.texts) && !demo && !explain ? body.texts : [body?.text];
         if (!texts.length || texts.length > MAX_BATCH || texts.some((t) => typeof t !== "string" || !t.trim() || t.length > MAX_TEXT))
           return json(res, 400, { error: `Send {"text": "..."} (1 to ${MAX_TEXT} characters) or {"texts": [...]} with up to ${MAX_BATCH} texts.` });
+        if (explain) return json(res, 200, { model: brain.info.name, ...brain.explain(texts[0] as string) });
         const results = (texts as string[]).map((t) => brain.classify(t));
         return json(res, 200, Array.isArray(body?.texts) && !demo ? { model: brain.info.name, results } : { model: brain.info.name, ...results[0] });
       }

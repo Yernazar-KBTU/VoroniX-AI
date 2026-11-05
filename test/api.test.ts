@@ -2,7 +2,7 @@ import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createAiServer } from "../src/server.js";
 
-const server = createAiServer({ apiKey: "secret", rateLimit: 30 });
+const server = createAiServer({ apiKey: "secret", rateLimit: 32 });
 let base = "";
 const post = (path: string, body: unknown, key?: string) =>
   fetch(base + path, { method: "POST", headers: { "content-type": "application/json", ...(key ? { authorization: `Bearer ${key}` } : {}) }, body: JSON.stringify(body) });
@@ -32,6 +32,30 @@ describe("VoroniX AI API", () => {
 
     const many = await (await post("/v1/classify", { texts: ["Спасибо!", "I want a refund"] }, "secret")).json();
     expect(many.results.map((r: { intents: { label: string }[] }) => r.intents[0].label)).toEqual(["thanks", "complaint"]);
+  });
+
+  it("opens the model up: explanation, training replay, data, storage, network", async () => {
+    const ex = await (await post("/demo/explain", { text: "Шаш қию қанша тұрады?" })).json();
+    expect(ex.features.length).toBeGreaterThan(10);
+    expect(ex.contributions[0]).toHaveLength(10);
+    const price = ex.labels.indexOf("price");
+    expect(ex.scores[price]).toBeGreaterThan(0.5);
+    // The explanation adds up to the same score the classifier gives.
+    const z = ex.bias[price] + ex.contributions.reduce((s: number, c: number[]) => s + c[price], 0);
+    expect(1 / (1 + Math.exp(-z))).toBeCloseTo(ex.scores[price], 6);
+
+    const tr = await (await fetch(base + "/v1/training")).json();
+    expect(tr.epochs).toHaveLength(61);
+    expect(tr.epochs[0]).toMatchObject({ epoch: 0, exact_match: 0 });
+    expect(tr.epochs[60].exact_match).toBeGreaterThan(0.7);
+    expect(tr.epochs[60].loss).toBeLessThan(tr.epochs[1].loss);
+
+    expect((await (await fetch(base + "/v1/dataset")).json()).phrases.length).toBeGreaterThan(600);
+    const st = await (await fetch(base + "/v1/storage")).json();
+    expect(st.weights.numbers).toBe(13 * st.vocabulary.size + 13);
+    const net = await (await fetch(base + "/v1/network?limit=100")).json();
+    expect(net.links).toHaveLength(100);
+    expect((await fetch(base + "/app.js")).headers.get("content-type")).toMatch(/javascript/);
   });
 
   it("refuses a missing key, bad input and too many requests", async () => {

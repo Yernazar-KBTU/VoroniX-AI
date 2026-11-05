@@ -46,9 +46,14 @@ In the CRM the model works together with the old rules: an intent counts when ei
 
 ```
 POST /v1/classify   {"text": "..."} or {"texts": ["...", ...]} (up to 50, 1000 characters each)
+POST /v1/explain    the features of a text and how each one voted for each intent
 GET  /v1/model      model information and the quality report
+GET  /v1/training   error and accuracy after every epoch of a training replay
+GET  /v1/dataset    all training phrases
+GET  /v1/storage    sizes of the data file, vocabulary and weights
+GET  /v1/network    the strongest connections of the model
 GET  /health        uptime check
-GET  /              home page: try the model, see its quality, read the API
+GET  /              the site (tabs: Try it, Inside the model, Training, Data & storage, API)
 ```
 
 ```bash
@@ -63,7 +68,14 @@ curl -X POST http://localhost:4000/v1/classify \
   "lang": "kk", "scores": { "...": 0.0 }, "lang_scores": { "ru": 0.0, "kk": 1.0, "en": 0.0 } }
 ```
 
-When `VORONIX_AI_KEY` is set, `/v1/classify` needs `Authorization: Bearer <key>`. The try box on the home page uses `/demo/classify`, which needs no key. Every address may send 120 requests a minute.
+When `VORONIX_AI_KEY` is set, `/v1/classify` and `/v1/explain` need `Authorization: Bearer <key>`. The site uses `/demo/classify` and `/demo/explain`, which need no key. Every address may send 120 requests a minute.
+
+## The site
+
+- **Try it**: write a message, see the intents and the language. On top, the 900 strongest real weights of the model drawn as a network.
+- **Inside the model**: the message cut into features, every feature voting for or against every intent (line thickness = weight), and the arithmetic: start value + votes = z, sigmoid(z) = score.
+- **Training**: a replay of a real training run (80 % of the phrases to learn, 20 % to check) from epoch 0, when the model knows nothing, to epoch 60; settings; every training phrase with filters.
+- **Data & storage**: what is kept where: the phrases file in git, weights only in memory, API messages not stored.
 
 ## Run
 
