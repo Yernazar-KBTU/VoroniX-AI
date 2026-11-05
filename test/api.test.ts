@@ -56,7 +56,8 @@ describe("VoroniX AI API", () => {
     const net = await (await fetch(base + "/v1/network?limit=100")).json();
     expect(net.links).toHaveLength(100);
     expect((await fetch(base + "/app.js")).headers.get("content-type")).toMatch(/javascript/);
-  });
+    // /v1/training replays 61 epochs of training on the whole dataset (about 4 to 5 s on CI).
+  }, 30_000);
 
   it("refuses a missing key, bad input and too many requests", async () => {
     expect((await post("/v1/classify", { text: "hi" })).status).toBe(401);
