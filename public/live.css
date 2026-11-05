@@ -75,7 +75,7 @@ input[type=text],input:not([type]),input[type=number]{font:inherit;padding:10px 
 .ev .ok,.plan .ok{color:var(--good);font-weight:700;font-size:13px}.ev .no{color:var(--neg);font-weight:700;font-size:13px}
 .delta{background:var(--chip);border-radius:8px;padding:2px 8px}.wt{background:var(--chip);border-radius:8px;padding:2px 8px;font-size:12px}.wt code{background:none;padding:0}
 .lb{display:inline-flex;gap:4px;align-items:center;font-size:12px;font-weight:600;border-radius:7px;padding:2px 7px;background:var(--chip);color:var(--ink)}
-.lb b{font-weight:800}.lb-booking,.node.lb-booking b{--c:#5b4bff}.lb-price{--c:#0f9d74}.lb-cancel{--c:#e0457b}.lb-complaint{--c:#c2185b}.lb-greeting{--c:#7a8094}.lb-address{--c:#2d7dd2}.lb-hours{--c:#2d7dd2}.lb-confirm{--c:#3aa655}.lb-thanks{--c:#d89614}.lb-other{--c:#8a8fa8}
+.lb b{font-weight:800}.lb-booking,.node.lb-booking b{--c:#5b4bff}.lb-visits{--c:#8a5cf6}.lb-price{--c:#0f9d74}.lb-cancel{--c:#e0457b}.lb-complaint{--c:#c2185b}.lb-greeting{--c:#7a8094}.lb-address{--c:#2d7dd2}.lb-hours{--c:#2d7dd2}.lb-confirm{--c:#3aa655}.lb-thanks{--c:#d89614}.lb-other{--c:#8a8fa8}
 .lb{box-shadow:inset 3px 0 0 var(--c,#999)}
 .tag.k-unsure{background:#f2a33a;color:#2a1600}.tag.k-unanswered{background:var(--accent);color:#fff}.tag.k-complaint{background:var(--neg);color:#fff}.tag.k-learn,.tag.k-good{background:var(--accent2);color:#04231f}.tag.k-bad{background:var(--neg);color:#fff}.tag.k-old{background:var(--line);color:var(--ink)}
 .tag{font-size:11px;padding:2px 8px;margin:0}

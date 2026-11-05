@@ -1,19 +1,20 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { augment, loadExamples } from "../src/data.js";
+import { augment, loadExamples, loadTraining, TEST_FILE } from "../src/data.js";
 import { evaluate } from "../src/evaluate.js";
 import { features } from "../src/features.js";
 import { IntentModel } from "../src/model.js";
 import { REPORT_FILE } from "../src/service.js";
 
-const examples = loadExamples();
+const examples = loadTraining();
+const unseen = loadExamples(TEST_FILE);
 const model = IntentModel.train(augment(examples));
 
 describe("dataset", () => {
   it("has every intent in every language", () => {
     for (const lang of ["ru", "kk", "en"]) {
       const labels = new Set(examples.filter((e) => e.lang === lang).flatMap((e) => e.labels));
-      expect([...labels].sort()).toEqual(["address", "booking", "cancel", "complaint", "confirm", "greeting", "hours", "other", "price", "thanks"]);
+      expect([...labels].sort()).toEqual(["address", "booking", "cancel", "complaint", "confirm", "greeting", "hours", "other", "price", "thanks", "visits"]);
       expect(examples.filter((e) => e.lang === lang).length).toBeGreaterThanOrEqual(200);
     }
   });
@@ -25,12 +26,22 @@ describe("dataset", () => {
 });
 
 describe("quality on phrases the model has not seen", () => {
-  const report = evaluate(examples);
+  const report = evaluate(examples, {}, unseen);
 
   it("meets the week 10 target", () => {
     expect(report.cross_validation.exact_match).toBeGreaterThanOrEqual(0.7);
     expect(report.cross_validation.micro_f1).toBeGreaterThanOrEqual(0.75);
     expect(report.cross_validation.language_accuracy).toBeGreaterThanOrEqual(0.95);
+  });
+
+  it("reads chat-style phrases it never trained on (data/test.tsv)", () => {
+    expect(report.test!.exact_match).toBeGreaterThanOrEqual(0.9);
+    expect(report.test!.language_accuracy).toBeGreaterThanOrEqual(0.97);
+  });
+
+  it("never trains on a test phrase", () => {
+    const train = new Set(examples.map((e) => `${e.lang}|${features(e.text).sort().join(" ")}`));
+    expect(unseen.filter((e) => train.has(`${e.lang}|${features(e.text).sort().join(" ")}`)).map((e) => e.text)).toEqual([]);
   });
 
   it("the published report (reports/metrics.json) is up to date: run npm run train after changing the data", () => {

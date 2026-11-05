@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { augment, DATA_FILE, LABELS, LANGS, parseExamples, type Example } from "./data.js";
+import { augment, LABELS, LANGS, parseExamples, trainingText, type Example } from "./data.js";
 import { evaluate, folds, score, type Report } from "./evaluate.js";
 import { IntentModel, type Explanation, type Prediction, type TrainOptions } from "./model.js";
 
@@ -35,7 +35,7 @@ export interface Brain {
 
 /** Builds the model. On the server it reads the files; the browser-only demo passes their contents in. */
 export function loadBrain(source?: { text: string; report?: Report }): Brain {
-  const text = source?.text ?? readFileSync(DATA_FILE, "utf8");
+  const text = source?.text ?? trainingText();
   const examples = parseExamples(text);
   const model = IntentModel.train(augment(examples));
   let report: Report;

@@ -22,7 +22,8 @@
     "build:demo": "tsx scripts/build-demo.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "build:brain": "tsx scripts/build-brain.ts"
+    "build:brain": "tsx scripts/build-brain.ts",
+    "generate": "tsx scripts/generate-phrases.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

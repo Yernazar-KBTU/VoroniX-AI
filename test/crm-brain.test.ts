@@ -41,6 +41,21 @@ describe("CRM brain", () => {
     bookings.push({ id: "AP-1", client: "c2", service: ok.book!.service, staff: ok.book!.staff, start: ok.book!.start });
   });
 
+  it("tells the client their own bookings", () => {
+    expect(turn("c2", "когда я записан?").outcome.reply).toMatch(/^Ваши записи: Мужская стрижка, .*10\.11/);
+    expect(turn("c9", "my bookings").outcome.reply).toMatch(/no upcoming bookings/);
+  });
+
+  it("a short answer during a booking continues it, and an offered time can be named", () => {
+    const first = turn("c6", "хочу записаться на бороду");
+    expect(first.outcome.reply).toMatch(/свободно/);
+    const next = turn("c6", "завтра");
+    expect(next.outcome.reply).toMatch(/свободно .*10\.11/);
+    const time = /10\.11, (\d\d:\d\d)/.exec(next.outcome.reply)![1];
+    const ok = turn("c6", `давайте в ${time}`);
+    expect(ok.book?.start).toBe(`2026-11-10 ${time}`);
+  });
+
   it("cancels the client's own booking", () => {
     const r = turn("c2", "Извините, отмените мою запись");
     expect(r.cancel).toEqual({ id: "AP-1" });

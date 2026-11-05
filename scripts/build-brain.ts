@@ -4,10 +4,11 @@ import { build } from "esbuild";
 import { execSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { trainingText } from "../src/data.js";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const stub = `${root}scripts/node-stub.js`;
-writeFileSync(stub, "export const readFileSync = () => { throw new Error('no files in the browser'); };\nexport const fileURLToPath = () => '';\n");
+writeFileSync(stub, "export const readFileSync = () => { throw new Error('no files in the browser'); };\nexport const existsSync = () => false;\nexport const fileURLToPath = () => '';\n");
 let commit = "dev";
 try {
   commit = execSync("git rev-parse --short HEAD", { cwd: root }).toString().trim();
@@ -21,7 +22,7 @@ const out = await build({
   target: "es2020",
   alias: { "node:fs": stub, "node:url": stub },
   define: {
-    PHRASES: JSON.stringify(readFileSync(`${root}data/phrases.tsv`, "utf8")),
+    PHRASES: JSON.stringify(trainingText()),
     VERSION: JSON.stringify(commit),
     "import.meta.url": JSON.stringify("https://voronix.local/src/"),
   },

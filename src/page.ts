@@ -13,6 +13,7 @@ export const LABEL_NAMES: Record<string, string> = {
   hours: "Asks opening hours",
   confirm: "Agrees",
   thanks: "Thanks",
+  visits: "Asks about own booking",
   other: "Something else",
 };
 
@@ -85,7 +86,7 @@ ${live ? '<section id="tab-live" class="tab" hidden><div id="vx-live"></div></se
 <button id="go2" type="button">Show the decision</button>
 </div>
 <div class="step"><span class="num">1</span><div><h3>Cut the message into features</h3><p class="note">Whole words, pairs of words, the first 4 letters of long words, and pieces of 3 to 5 letters. Pieces let the model recognise «қанша» inside «қаншадан» or a typo. The signs &lt; and &gt; mark the start and end of a word. Features the model never saw in training are ignored.</p><div id="feats" class="feats"></div></div></div>
-<div class="step"><span class="num">2</span><div><h3>Every feature votes for or against every intent</h3><p class="note">The strongest features of this message on the left, the 10 intents on the right. Teal lines vote for, pink lines against; a thicker line is a stronger vote. The circle grows with the intent's score.</p><div class="card vis"><svg id="flow" viewBox="0 0 900 540" role="img" aria-label="How the features of the message vote for each intent"></svg></div></div></div>
+<div class="step"><span class="num">2</span><div><h3>Every feature votes for or against every intent</h3><p class="note">The strongest features of this message on the left, the 11 intents on the right. Teal lines vote for, pink lines against; a thicker line is a stronger vote. The circle grows with the intent's score.</p><div class="card vis"><svg id="flow" viewBox="0 0 900 540" role="img" aria-label="How the features of the message vote for each intent"></svg></div></div></div>
 <div class="step"><span class="num">3</span><div><h3>Add up the votes and turn them into a probability</h3><p class="note">For each intent: start value (bias) + sum of votes = z, then the sigmoid 1 / (1 + e<sup>−z</sup>) turns z into a score from 0 to 1. Intents above 0.5 are the answer.</p><div id="math" class="card table"></div></div></div>
 </section>
 

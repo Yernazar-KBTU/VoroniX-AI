@@ -66,7 +66,7 @@ const shown = (f: string) => {
   return t.startsWith("<") && t.endsWith(">") ? core : t.startsWith("<") ? `${core}…` : t.endsWith(">") ? `…${core}` : core;
 };
 const LANG_NAMES: Record<Lang, string> = { ru: "Russian", kk: "Kazakh", en: "English" };
-const SHORT: Record<string, string> = { greeting: "Hi", price: "Price", booking: "Book", cancel: "Cancel", complaint: "Complaint", address: "Address", hours: "Hours", confirm: "Agrees", thanks: "Thanks", other: "Other", ru: "RU", kk: "KZ", en: "EN" };
+const SHORT: Record<string, string> = { greeting: "Hi", price: "Price", booking: "Book", cancel: "Cancel", complaint: "Complaint", address: "Address", hours: "Hours", confirm: "Agrees", thanks: "Thanks", visits: "Visits", other: "Other", ru: "RU", kk: "KZ", en: "EN" };
 const nameOf = (l: string) => LABEL_NAMES[l] ?? LANG_NAMES[l as Lang] ?? l;
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 const sgn = (n: number, d = 2) => `${n >= 0 ? "+" : "−"}${Math.abs(n).toFixed(d)}`;

@@ -1,0 +1,156 @@
+# VoroniX AI test phrases: the model NEVER trains on these. They measure how it
+# handles messages written the way real clients write (short, no punctuation,
+# typos, slang, Latin letters, mixed requests). Same columns as phrases.tsv.
+lang	labels	text
+ru	booking	запишите меня
+ru	booking	запиши на завтра
+ru	booking	завтра
+ru	booking	можно на вечер?
+ru	booking	есть окошко на субботу
+ru	booking	а на 6 вечера есть кто нибудь свободный
+ru	booking	хачу подстричся завтра
+ru	booking	можно к тимуру в пятницу
+ru	booking	записаться бы на бороду
+ru	booking	после работы можно подойти?
+ru	booking	на сегодня есть место?
+ru	booking	zapishite menya na zavtra
+ru	booking	мне бы постричься на выходных
+ru	greeting,booking	привет, хочу на стрижку
+ru	greeting,booking	здрасте можно записаться на бритьё
+ru	visits	мои записи
+ru	visits	покажи мои записи
+ru	visits	когда я записан?
+ru	visits	на какое время у меня запись
+ru	visits	напомните во сколько я записан
+ru	visits	я записан на завтра?
+ru	price	скока стоит стрижка
+ru	price	прайс скиньте
+ru	price	цены какие
+ru	price	сколько за бороду
+ru	price	skolko stoit strizhka
+ru	price	а vip ритуал дорого?
+ru	greeting,price	здарова, сколько стоит машинкой
+ru	booking,price	можно сегодня вечером бороду оформить? и сколько это
+ru	price,booking	сколько стоит и можно на завтра?
+ru	cancel	отмените запись
+ru	cancel	не смогу прийти
+ru	cancel	отмена
+ru	cancel	я не приду завтра
+ru	cancel	сорян, не получится прийти, отмените
+ru	cancel	хочу отменить запись на пятницу
+ru	cancel	otmenite pozhaluysta
+ru	complaint	ужасно подстригли
+ru	complaint	мастер опоздал на полчаса, это неуважение
+ru	complaint	мне не понравилось
+ru	complaint	криво побрили, кожа горит
+ru	complaint	больше к вам не приду
+ru	complaint	верните деньги
+ru	address	где вы
+ru	address	адрес скиньте
+ru	address	как вас найти
+ru	address	вы на панфилова?
+ru	address	где находитесь
+ru	hours	до скольки работаете
+ru	hours	вы в воскресенье работаете?
+ru	hours	график работы
+ru	hours	открыто сейчас?
+ru	hours,address	где вы и до скольки
+ru	confirm	подходит
+ru	confirm	первый вариант
+ru	confirm	да, на 17:00
+ru	confirm	норм
+ru	thanks	спасибо большое, до встречи
+ru	other	у вас есть парковка?
+ru	other	вы делаете окрашивание волос?
+ru	other	есть ли вакансия барбера
+ru	other	а кофе у вас есть
+ru	other	какой шампунь используете
+kk	booking	ертеңге жазыңызшы
+kk	booking	ертең
+kk	booking	кешке бола ма
+kk	booking	сенбіге орын бар ма
+kk	booking	сақал түзетуге жазылайын
+kk	booking	жазылайын деп едім
+kk	booking	бүгін бос уақыт бар ма
+kk	booking	tymurga zhazylugha bola ma
+kk	booking	ертен кешке жазып койыныз
+kk	greeting,booking	сәлем, шаш қидыруға жазылайын
+kk	greeting,booking	салеметсиз бе ертенге жазылуга бола ма
+kk	visits	менің жазылуым қашан
+kk	visits	қай уақытқа жазылдым
+kk	visits	менің жазылуларымды көрсетіңіз
+kk	visits	мен ертеңге жазылдым ба
+kk	price	сақал қанша тұрады
+kk	price	баға тізімін жіберіңізші
+kk	price	балалар шаш қию бағасы
+kk	greeting,price	сәлем, бағалар қандай
+kk	cancel	жазылуды болдырмаңыз
+kk	cancel	келе алмаймын
+kk	cancel	ертең келмеймін
+kk	cancel	келе алмаймын, кешіріңіз
+kk	complaint	маған ұнамады
+kk	complaint	шебер кешікті
+kk	complaint	шашымды бүлдіріп тастадыңыздар
+kk	complaint	қызмет нашар
+kk	complaint	ақшамды қайтарыңыз
+kk	address	қайдасыздар
+kk	address	сізге қалай жетуге болады
+kk	address	кайда орналасканыз
+kk	hours	қашанға дейін жұмыс істейсіздер
+kk	hours	нешеде ашыласыздар
+kk	hours	жексенбіде жұмыс істейсіздер ме
+kk	hours	жұмыс уақытыңыз
+kk	confirm	келісемін
+kk	confirm	бірінші нұсқа
+kk	thanks	рақмет үлкен
+kk	other	тұрақ бар ма
+kk	other	шаш бояйсыздар ма
+kk	other	жұмысқа барбер керек пе
+en	booking	book me in
+en	booking	can i come tomorrow
+en	booking	tomorrow
+en	booking	any slots saturday?
+en	booking	need a haircut asap
+en	booking	can i get a beard trim tonight
+en	booking	is timur free friday
+en	booking	i wanna book
+en	booking	wanna get a fade tmrw
+en	booking	do you have anything after 6
+en	greeting,booking	hi, can i book a haircut
+en	greeting,booking	hey can i come in today
+en	visits	my bookings
+en	visits	when is my appointment
+en	visits	what time am i booked for
+en	visits	do i have a booking tomorrow?
+en	price	how much
+en	price	price list pls
+en	price	how much for a beard trim
+en	price	whats the price of a kids cut
+en	price	is the vip ritual expensive
+en	price,booking	how much is it and can i come today
+en	cancel	cancel my booking
+en	cancel	i cant make it
+en	cancel	need to cancel tomorrow
+en	cancel	sorry wont be able to come
+en	cancel	pls cancel
+en	complaint	terrible haircut
+en	complaint	the barber was late
+en	complaint	worst service ever
+en	complaint	not happy with my beard
+en	address	where are you
+en	address	whats your address
+en	address	how do i find you
+en	address	location?
+en	hours	are you open sunday
+en	hours	opening hours?
+en	hours	open now?
+en	hours,address	where are you and when do you open
+en	confirm	sounds good
+en	confirm	the first one
+en	confirm	yep 5pm works
+en	confirm,thanks	yes thanks
+en	greeting	hello there
+en	greeting	good morning
+en	other	do you have parking
+en	other	do you dye hair
+en	other	are you hiring

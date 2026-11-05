@@ -1,229 +1,227 @@
 {
   "dataset": {
-    "phrases": 638,
+    "phrases": 3821,
     "by_language": {
-      "ru": 213,
-      "kk": 220,
-      "en": 205
+      "ru": 1706,
+      "kk": 1034,
+      "en": 1081
     },
     "by_label": {
-      "greeting": 64,
-      "hours": 54,
-      "price": 88,
-      "booking": 135,
-      "cancel": 54,
-      "complaint": 69,
-      "address": 48,
-      "confirm": 66,
-      "thanks": 38,
-      "other": 66
+      "greeting": 738,
+      "hours": 202,
+      "price": 682,
+      "booking": 1536,
+      "cancel": 347,
+      "complaint": 181,
+      "address": 158,
+      "confirm": 270,
+      "thanks": 241,
+      "other": 140,
+      "visits": 191
     }
   },
   "holdout": {
-    "examples": 128,
-    "exact_match": 0.758,
+    "examples": 765,
+    "exact_match": 0.925,
     "micro": {
-      "precision": 0.806,
-      "recall": 0.783,
-      "f1": 0.794
+      "precision": 0.944,
+      "recall": 0.951,
+      "f1": 0.947
     },
     "per_label": {
       "greeting": {
-        "precision": 1,
-        "recall": 0.571,
-        "f1": 0.727,
-        "support": 14
+        "precision": 0.966,
+        "recall": 0.973,
+        "f1": 0.969,
+        "support": 147
       },
       "price": {
-        "precision": 1,
-        "recall": 0.947,
-        "f1": 0.973,
-        "support": 19
+        "precision": 0.977,
+        "recall": 0.962,
+        "f1": 0.969,
+        "support": 132
       },
       "booking": {
-        "precision": 0.743,
-        "recall": 0.897,
-        "f1": 0.813,
-        "support": 29
+        "precision": 0.934,
+        "recall": 0.993,
+        "f1": 0.963,
+        "support": 298
       },
       "cancel": {
-        "precision": 1,
-        "recall": 0.7,
-        "f1": 0.824,
-        "support": 10
+        "precision": 0.973,
+        "recall": 0.973,
+        "f1": 0.973,
+        "support": 74
       },
       "complaint": {
         "precision": 1,
-        "recall": 0.769,
-        "f1": 0.87,
-        "support": 13
+        "recall": 0.686,
+        "f1": 0.814,
+        "support": 35
       },
       "address": {
-        "precision": 0.857,
-        "recall": 0.6,
-        "f1": 0.706,
-        "support": 10
+        "precision": 0.939,
+        "recall": 0.939,
+        "f1": 0.939,
+        "support": 33
       },
       "hours": {
-        "precision": 0.636,
-        "recall": 0.636,
-        "f1": 0.636,
-        "support": 11
+        "precision": 0.949,
+        "recall": 0.974,
+        "f1": 0.961,
+        "support": 38
       },
       "confirm": {
-        "precision": 0.833,
-        "recall": 0.769,
-        "f1": 0.8,
-        "support": 13
+        "precision": 0.979,
+        "recall": 0.852,
+        "f1": 0.911,
+        "support": 54
       },
       "thanks": {
-        "precision": 1,
-        "recall": 1,
-        "f1": 1,
-        "support": 7
+        "precision": 0.98,
+        "recall": 0.96,
+        "f1": 0.97,
+        "support": 50
+      },
+      "visits": {
+        "precision": 0.976,
+        "recall": 0.952,
+        "f1": 0.964,
+        "support": 42
       },
       "other": {
-        "precision": 0.474,
-        "recall": 0.75,
-        "f1": 0.581,
-        "support": 12
+        "precision": 0.588,
+        "recall": 0.741,
+        "f1": 0.656,
+        "support": 27
       }
     },
-    "language_accuracy": 0.977,
+    "language_accuracy": 0.995,
     "exact_match_by_language": {
-      "ru": 0.791,
-      "kk": 0.727,
-      "en": 0.756
+      "ru": 0.904,
+      "kk": 0.922,
+      "en": 0.963
     },
     "mistakes": [
       {
-        "text": "how do I get to you",
-        "expected": [
-          "address"
-        ],
-        "got": [
-          "hours"
-        ]
-      },
-      {
-        "text": "Is there parking nearby?",
-        "expected": [
-          "address"
-        ],
-        "got": [
-          "other"
-        ]
-      },
-      {
-        "text": "Do you have another time?",
-        "expected": [
-          "booking"
-        ],
-        "got": [
-          "hours"
-        ]
-      },
-      {
-        "text": "I'm sick, won't come",
+        "text": "can you remove tomorrow's reservation",
         "expected": [
           "cancel"
         ],
         "got": [
-          "other"
+          "booking"
         ]
       },
       {
-        "text": "Perfect, let's do it",
+        "text": "I want a refund",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "yep at 1:900 works",
         "expected": [
           "confirm"
         ],
         "got": [
-          "other"
-        ]
-      },
-      {
-        "text": "yes, thank you",
-        "expected": [
           "confirm",
-          "thanks"
-        ],
-        "got": [
-          "thanks"
-        ]
-      },
-      {
-        "text": "Good morning, are you open?",
-        "expected": [
-          "greeting",
-          "hours"
-        ],
-        "got": [
-          "hours"
-        ]
-      },
-      {
-        "text": "Good evening, what are your haircut prices?",
-        "expected": [
-          "greeting",
-          "price"
-        ],
-        "got": [
-          "price"
-        ]
-      },
-      {
-        "text": "Hello, I'd like to book for tomorrow",
-        "expected": [
-          "greeting",
-          "booking"
-        ],
-        "got": [
           "booking"
         ]
       },
       {
-        "text": "Are you working tomorrow?",
+        "text": "Yes, book me",
         "expected": [
-          "hours"
-        ],
-        "got": [
-          "other"
-        ]
-      },
-      {
-        "text": "Қайда екеніңізді жазыңызшы",
-        "expected": [
-          "address"
-        ],
-        "got": [
-          "other"
-        ]
-      },
-      {
-        "text": "Ертең сағат 12-де бос па?",
-        "expected": [
-          "booking"
-        ],
-        "got": [
-          "other"
-        ]
-      },
-      {
-        "text": "Таңғы 10-да бос па?",
-        "expected": [
-          "booking"
-        ],
-        "got": [
           "confirm"
+        ],
+        "got": [
+          "confirm",
+          "booking"
         ]
       },
       {
-        "text": "Жазылудан бас тартамын",
+        "text": "Fine, book me in",
         "expected": [
-          "cancel"
+          "confirm"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "morinng, i want to book tomorrow",
+        "expected": [
+          "greeting",
+          "booking"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "Do you work on Sundays?",
+        "expected": [
+          "hours"
+        ],
+        "got": [
+          "booking",
+          "hours"
+        ]
+      },
+      {
+        "text": "what products do you use",
+        "expected": [
+          "other"
+        ],
+        "got": [
+          "hours"
+        ]
+      },
+      {
+        "text": "бгін",
+        "expected": [
+          "booking"
         ],
         "got": [
           "other"
+        ]
+      },
+      {
+        "text": "Шағым бергім келеді",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "жарты сагат куттим",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "жарты сағат күттім",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "шағым айтқым келеді",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "booking"
         ]
       },
       {
@@ -232,16 +230,34 @@
           "complaint"
         ],
         "got": [
-          "booking"
+          "other"
         ]
       },
       {
-        "text": "Неге маған дөрекі сөйледіңіздер?",
+        "text": "енді келмеймін",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "cancel"
+        ]
+      },
+      {
+        "text": "Шбер кешікті",
         "expected": [
           "complaint"
         ],
         "got": [
           "other"
+        ]
+      },
+      {
+        "text": "енді келмеймін өтінемін",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "cancel"
         ]
       },
       {
@@ -254,72 +270,111 @@
         ]
       },
       {
-        "text": "Армысыздар",
+        "text": "Келісеін мүмкін болса",
         "expected": [
+          "confirm"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "Сәлеметсіз бе, жазылуымды өшіргім келеді",
+        "expected": [
+          "greeting",
+          "cancel"
+        ],
+        "got": [
+          "greeting",
+          "cancel",
+          "booking"
+        ]
+      },
+      {
+        "text": "Сағат нешеге дейін келуге болады",
+        "expected": [
+          "hours"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "қалайсыз",
+        "expected": [
+          "other"
+        ],
+        "got": [
+          "address"
+        ]
+      },
+      {
+        "text": "калайсыз",
+        "expected": [
+          "other"
+        ],
+        "got": [
+          "address"
+        ]
+      },
+      {
+        "text": "нешеде келуім керек еді",
+        "expected": [
+          "visits"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "v kakom rayone vy",
+        "expected": [
+          "address"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "где ваш салон",
+        "expected": [
+          "address"
+        ],
+        "got": [
+          "address",
           "greeting"
-        ],
-        "got": [
-          "hours",
-          "address"
         ]
       },
       {
-        "text": "Демалыс күндеріңіз бар ма?",
-        "expected": [
-          "hours"
-        ],
-        "got": [
-          "booking"
-        ]
-      },
-      {
-        "text": "Кофе бар ма?",
-        "expected": [
-          "other"
-        ],
-        "got": [
-          "booking"
-        ]
-      },
-      {
-        "text": "Шампунь сатасыздар ма?",
-        "expected": [
-          "other"
-        ],
-        "got": [
-          "hours"
-        ]
-      },
-      {
-        "text": "Сақал түзету неше теңге?",
-        "expected": [
-          "price"
-        ],
-        "got": [
-          "other"
-        ]
-      },
-      {
-        "text": "Есть парковка рядом?",
+        "text": "v kakom rayone vy если можно",
         "expected": [
           "address"
         ],
         "got": [
-          "booking"
+          "other"
         ]
       },
       {
-        "text": "давайте на 17:30",
+        "text": "есть кто сегдня вечером?",
         "expected": [
           "booking"
         ],
         "got": [
           "booking",
+          "greeting"
+        ]
+      },
+      {
+        "text": "До обеда",
+        "expected": [
+          "booking"
+        ],
+        "got": [
           "confirm"
         ]
       },
       {
-        "text": "уберите мою запись на пятницу",
+        "text": "ne pridu na etoy nedele",
         "expected": [
           "cancel"
         ],
@@ -328,68 +383,415 @@
         ]
       },
       {
-        "text": "хочу возврат денег",
+        "text": "otmenite zapis, ot dushi",
+        "expected": [
+          "cancel",
+          "thanks"
+        ],
+        "got": [
+          "cancel"
+        ]
+      },
+      {
+        "text": "уберите мою запись на пятницу",
+        "expected": [
+          "cancel"
+        ],
+        "got": [
+          "cancel",
+          "booking"
+        ]
+      },
+      {
+        "text": "ne smogu priyti",
+        "expected": [
+          "cancel"
+        ],
+        "got": [
+          "cancel",
+          "greeting"
+        ]
+      },
+      {
+        "text": "Почему мне нахамили на ресепшене?",
         "expected": [
           "complaint"
         ],
         "got": [
-          "booking"
+          "price"
         ]
       },
       {
-        "text": "Доброе утро, вы работаете?",
+        "text": "меня не приняли хотя я был записан, безобразие",
         "expected": [
-          "greeting",
-          "hours"
+          "complaint"
         ],
         "got": [
-          "hours"
+          "complaint",
+          "visits"
         ]
       },
       {
-        "text": "Привет, хочу записаться на завтра",
+        "text": "mne ne ponravilos 😊",
         "expected": [
-          "greeting",
-          "booking"
+          "complaint"
         ],
         "got": [
-          "booking"
+          "complaint",
+          "greeting"
         ]
       },
       {
-        "text": "До какого часа можно прийти",
+        "text": "borodu isportili",
         "expected": [
-          "hours"
-        ],
-        "got": [
-          "booking"
-        ]
-      },
-      {
-        "text": "Выходные у вас есть?",
-        "expected": [
-          "hours"
+          "complaint"
         ],
         "got": [
           "other"
         ]
       },
       {
-        "text": "Можно прийти с ребенком?",
+        "text": "Ага",
+        "expected": [
+          "confirm"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "da posle raboty",
+        "expected": [
+          "confirm"
+        ],
+        "got": [
+          "hours"
+        ]
+      },
+      {
+        "text": "vtore",
+        "expected": [
+          "confirm"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "Подтверждаю",
+        "expected": [
+          "confirm"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "можно",
+        "expected": [
+          "confirm"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "salyut napomnite vremya zapisi",
+        "expected": [
+          "greeting",
+          "visits"
+        ],
+        "got": [
+          "visits"
+        ]
+      },
+      {
+        "text": "dobryy den, kakie tseny?",
+        "expected": [
+          "greeting",
+          "price"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "zdraste, kakie tseny?",
+        "expected": [
+          "greeting",
+          "price"
+        ],
+        "got": [
+          "greeting"
+        ]
+      },
+      {
+        "text": "саюлт, скиньте прайс",
+        "expected": [
+          "greeting",
+          "price"
+        ],
+        "got": [
+          "price"
+        ]
+      },
+      {
+        "text": "vo skolko zakryvaetes",
+        "expected": [
+          "hours"
+        ],
+        "got": [
+          "price",
+          "hours"
+        ]
+      },
+      {
+        "text": "кофе есть )",
         "expected": [
           "other"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "сколько мстеров у вас",
+        "expected": [
+          "other"
+        ],
+        "got": [
+          "price"
+        ]
+      },
+      {
+        "text": "кто ты",
+        "expected": [
+          "other"
+        ],
+        "got": [
+          "greeting"
+        ]
+      },
+      {
+        "text": "kto ty 🙏",
+        "expected": [
+          "other"
+        ],
+        "got": [
+          "thanks"
+        ]
+      },
+      {
+        "text": "tseny na uslugi",
+        "expected": [
+          "price"
+        ],
+        "got": [
+          "booking"
+        ]
+      },
+      {
+        "text": "пайс лист",
+        "expected": [
+          "price"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "Прайс можно?",
+        "expected": [
+          "price"
+        ],
+        "got": [
+          "price",
+          "booking"
+        ]
+      },
+      {
+        "text": "skoka sotit okantovka",
+        "expected": [
+          "price"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "blagodaryu 🙏",
+        "expected": [
+          "thanks"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "есть у меня запиь в пятницу",
+        "expected": [
+          "visits"
         ],
         "got": [
           "booking"
         ]
       }
     ],
-    "train_examples": 510
+    "train_examples": 3056
   },
   "cross_validation": {
     "folds": 5,
-    "exact_match": 0.764,
-    "micro_f1": 0.806,
-    "language_accuracy": 0.98
+    "exact_match": 0.932,
+    "micro_f1": 0.952,
+    "language_accuracy": 0.995
+  },
+  "test": {
+    "examples": 152,
+    "exact_match": 0.954,
+    "micro": {
+      "precision": 0.958,
+      "recall": 0.964,
+      "f1": 0.961
+    },
+    "per_label": {
+      "greeting": {
+        "precision": 0.909,
+        "recall": 1,
+        "f1": 0.952,
+        "support": 10
+      },
+      "price": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "support": 19
+      },
+      "booking": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "support": 41
+      },
+      "cancel": {
+        "precision": 0.938,
+        "recall": 0.938,
+        "f1": 0.938,
+        "support": 16
+      },
+      "complaint": {
+        "precision": 1,
+        "recall": 0.867,
+        "f1": 0.929,
+        "support": 15
+      },
+      "address": {
+        "precision": 0.929,
+        "recall": 0.929,
+        "f1": 0.929,
+        "support": 14
+      },
+      "hours": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "support": 13
+      },
+      "confirm": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "support": 10
+      },
+      "thanks": {
+        "precision": 1,
+        "recall": 1,
+        "f1": 1,
+        "support": 3
+      },
+      "visits": {
+        "precision": 0.933,
+        "recall": 1,
+        "f1": 0.966,
+        "support": 14
+      },
+      "other": {
+        "precision": 0.75,
+        "recall": 0.818,
+        "f1": 0.783,
+        "support": 11
+      }
+    },
+    "language_accuracy": 1,
+    "exact_match_by_language": {
+      "ru": 0.952,
+      "kk": 1,
+      "en": 0.917
+    },
+    "mistakes": [
+      {
+        "text": "больше к вам не приду",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "cancel"
+        ]
+      },
+      {
+        "text": "вы на панфилова?",
+        "expected": [
+          "address"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "у вас есть парковка?",
+        "expected": [
+          "other"
+        ],
+        "got": [
+          "address"
+        ]
+      },
+      {
+        "text": "cancel my booking",
+        "expected": [
+          "cancel"
+        ],
+        "got": [
+          "cancel",
+          "visits"
+        ]
+      },
+      {
+        "text": "sorry wont be able to come",
+        "expected": [
+          "cancel"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "not happy with my beard",
+        "expected": [
+          "complaint"
+        ],
+        "got": [
+          "other"
+        ]
+      },
+      {
+        "text": "are you hiring",
+        "expected": [
+          "other"
+        ],
+        "got": [
+          "greeting"
+        ]
+      }
+    ]
   }
 }

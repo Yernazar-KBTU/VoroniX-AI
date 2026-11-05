@@ -64,6 +64,8 @@ const T = {
   thanks: { ru: "Пожалуйста! Будем рады вас видеть.", kk: "Оқасы жоқ! Сізді күтеміз.", en: "You're welcome! See you soon." },
   complaint: { ru: "Мне очень жаль, что так вышло. Ваше сообщение передано менеджеру, он свяжется с вами в ближайшее время.", kk: "Осындай жағдай болғанына өте өкінемін. Хабарыңыз менеджерге жіберілді, ол жақын арада хабарласады.", en: "I'm really sorry about this. Your message is with our manager, who will contact you shortly." },
   ok: { ru: "Хорошо!", kk: "Жақсы!", en: "Great!" },
+  visits: (l: string): Say => ({ ru: `Ваши записи: ${l}.`, kk: `Сіздің жазылуларыңыз: ${l}.`, en: `Your bookings: ${l}.` }),
+  noVisits: { ru: "У вас пока нет будущих записей. Записать вас?", kk: "Сізде әзірге алдағы жазылу жоқ. Жазып қояйын ба?", en: "You have no upcoming bookings yet. Shall I book you in?" },
   unknown: { ru: "Хороший вопрос. Уточню у администратора и сразу вам напишу.", kk: "Жақсы сұрақ. Әкімшіден нақтылап, сізге бірден жазамын.", en: "Good question. Let me check with the manager and get back to you." },
 };
 
@@ -89,14 +91,16 @@ export function respond(ctx: AgentContext, client: ClientMemory, text: string, a
   const labels = new Set<Label>(pred.intents.map((i) => i.label));
   if (isComplaint(text) && !labels.has("complaint")) labels.add("complaint");
   const d: Dialog = { ...client.dialog };
-  const pick = ordinal(text);
+  const time = parseTime(text);
+  const day = parseDay(text, now);
+  // «давайте в 17:30» after an offer: the offered slot at that time.
+  const atOffered = d.stage === "offer" && time?.exact && !day ? (d.offers ?? []).findIndex((o) => o.start.slice(11) === time.exact) : -1;
+  const pick = atOffered >= 0 ? atOffered : ordinal(text);
   const agreed = d.stage === "offer" && !labels.has("cancel") && (labels.has("confirm") || saysYes(text) || pick !== null);
   if (agreed) labels.add("confirm");
   if (labels.size > 1) labels.delete("other");
 
   const service = matchService(text, b.services)?.id;
-  const day = parseDay(text, now);
-  const time = parseTime(text);
   const name = parseName(text);
   const said: Said = { text, lang, labels: [...labels] };
   const out: Outcome = { prediction: pred, lang, labels: [...labels], unsure: !agreed && top.score < SURE, reply: "", actions: [], learn: [], queue: [], client, entities: { service, day, time, name } };
@@ -136,7 +140,13 @@ export function respond(ctx: AgentContext, client: ClientMemory, text: string, a
     out.actions.push({ type: "handoff", text: "Handed over to the manager" });
     out.queue.push({ kind: "complaint", text, lang, guess: [...labels], score: top.score, client: mem.id, clientName: mem.name, ...chan(mem) });
     d.stage = "idle";
-  } else if (labels.has("booking") || (d.stage === "service" && service)) {
+  } else if (labels.has("visits") && !labels.has("booking")) {
+    const next = upcoming(ctx.bookings, mem.id, now);
+    if (next.length) say(T.visits(next.slice(0, 3).map((k) => `${serviceName(b, k.service, lang)}, ${when(k.start, lang)}, ${staffName(b, k.staff, lang)}`).join("; ")));
+    else say(T.noVisits);
+    out.actions.push({ type: "answer", text: next.length ? `Listed ${next.length} upcoming booking${next.length > 1 ? "s" : ""}` : "No upcoming bookings" });
+    d.stage = "idle";
+  } else if (labels.has("booking") || (d.stage === "service" && service) || (d.stage !== "idle" && (day || time) && !labels.has("price") && !labels.has("hours") && !labels.has("address"))) {
     const svcId = service ?? d.service ?? h.service;
     if (!d.started) d.started = said;
     if (!svcId) {

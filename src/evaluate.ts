@@ -81,6 +81,8 @@ export interface Report {
   dataset: { phrases: number; by_language: Record<string, number>; by_label: Record<string, number> };
   holdout: Metrics & { train_examples: number };
   cross_validation: { folds: number; exact_match: number; micro_f1: number; language_accuracy: number };
+  /** The model trained on all training phrases, measured on data/test.tsv (phrases it never trains on). */
+  test?: Metrics;
 }
 
 /**
@@ -88,7 +90,7 @@ export interface Report {
  * 1) holdout: train on 80 %, test on 20 %;
  * 2) 5-fold cross-validation: every phrase is tested exactly once.
  */
-export function evaluate(examples: Example[], opts: TrainOptions = {}): Report {
+export function evaluate(examples: Example[], opts: TrainOptions = {}, unseen?: Example[]): Report {
   const parts = folds(examples, 5);
   const test = parts[0];
   const train = parts.slice(1).flat();
@@ -102,5 +104,6 @@ export function evaluate(examples: Example[], opts: TrainOptions = {}): Report {
     dataset: { phrases: examples.length, by_language: count((e) => [e.lang]), by_label: count((e) => e.labels) },
     holdout,
     cross_validation: { folds: parts.length, exact_match: avg((m) => m.exact_match), micro_f1: avg((m) => m.micro.f1), language_accuracy: avg((m) => m.language_accuracy) },
+    ...(unseen ? { test: score(IntentModel.train(augment(examples), opts), unseen) } : {}),
   };
 }

@@ -522,7 +522,7 @@ ${ch.length ? `<div class="ev-row w"><span class="k">Weights</span>${ch.slice(0,
 <div id="fl-root"></div>
 <div class="card fl-about"><h2>How to read it</h2><ol class="fl-read">
 <li><b>Words → features.</b> The message is cut into whole words, pairs of words, word starts and pieces of 3 to 5 letters, so endings and typos still match. A filled dot is a feature the model knows. An empty ring is new to it and has no lines yet.</li>
-<li><b>Features → weights.</b> Every known feature is joined to all 13 outputs (10 intents, 3 languages) by its own weight: one line each. Green votes for, red against, brighter and thicker is stronger. A vote is weight × 1/√(number of known features).</li>
+<li><b>Features → weights.</b> Every known feature is joined to all 14 outputs (11 intents, 3 languages) by its own weight: one line each. Green votes for, red against, brighter and thicker is stronger. A vote is weight × 1/√(number of known features).</li>
 <li><b>Sum → score.</b> Each output adds its start value and all its votes, which gives z. For an intent, sigmoid(z) is the score and the ring fills with it. Intents from 50% are taken; if none reaches 50%, the strongest from 30%, otherwise «Other». The language is a softmax over the three.</li>
 <li><b>Decision → action.</b> The intents decide the reply and what the AI does: book or cancel in the CRM, answer from the CRM data or the knowledge, or pass the chat to a person.</li>
 <li><b>Learning.</b> When the conversation proves what a message meant, or a person checks it, the error (right answer − score) runs back along the lines in yellow and every weight of the phrase moves a little. Then you see the new lines and the new scores.</li>

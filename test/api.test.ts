@@ -37,7 +37,7 @@ describe("VoroniX AI API", () => {
   it("opens the model up: explanation, training replay, data, storage, network", async () => {
     const ex = await (await post("/demo/explain", { text: "Шаш қию қанша тұрады?" })).json();
     expect(ex.features.length).toBeGreaterThan(10);
-    expect(ex.contributions[0]).toHaveLength(10);
+    expect(ex.contributions[0]).toHaveLength(11);
     const price = ex.labels.indexOf("price");
     expect(ex.scores[price]).toBeGreaterThan(0.5);
     // The explanation adds up to the same score the classifier gives.
@@ -52,7 +52,7 @@ describe("VoroniX AI API", () => {
 
     expect((await (await fetch(base + "/v1/dataset")).json()).phrases.length).toBeGreaterThan(600);
     const st = await (await fetch(base + "/v1/storage")).json();
-    expect(st.weights.numbers).toBe(13 * st.vocabulary.size + 13);
+    expect(st.weights.numbers).toBe(14 * st.vocabulary.size + 14);
     const net = await (await fetch(base + "/v1/network?limit=100")).json();
     expect(net.links).toHaveLength(100);
     expect((await fetch(base + "/app.js")).headers.get("content-type")).toMatch(/javascript/);
