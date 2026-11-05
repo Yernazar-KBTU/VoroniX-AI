@@ -26,7 +26,9 @@ const EXAMPLES = [
 ];
 
 /** The service's site: try the model, look inside it, watch it train, see how data is kept, read the API. */
-export function page(brain: Brain): string {
+/** live: the browser version that works and learns with the site's own database (see src/live). */
+export function page(brain: Brain, opts: { live?: boolean } = {}): string {
+  const live = !!opts.live;
   const r = brain.report;
   const rows = Object.entries(r.holdout.per_label)
     .map(([l, m]) => `<tr><td>${esc(LABEL_NAMES[l] ?? l)} <code>${esc(l)}</code></td><td>${m.support}</td><td>${pct(m.precision)}</td><td>${pct(m.recall)}</td><td><b>${pct(m.f1)}</b></td></tr>`)
@@ -42,13 +44,14 @@ export function page(brain: Brain): string {
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">V</div><b>VoroniX AI</b><span>model ${esc(brain.info.name)} v${esc(brain.info.version)}</span></header>
+<header><div class="logo">V</div><b>VoroniX AI</b><span id="vx-model">model ${esc(brain.info.name)} v${esc(brain.info.version)}</span></header>
 <nav class="tabs" role="tablist">
-<a href="#try" data-tab="try">Try it</a><a href="#inside" data-tab="inside">Inside the model</a><a href="#training" data-tab="training">Training</a><a href="#data" data-tab="data">Data &amp; storage</a><a href="#api" data-tab="api">API</a>
+${live ? '<a href="#live" data-tab="live">Live</a><a href="#crm" data-tab="crm">CRM</a><a href="#training" data-tab="training">Training <i class="badge" id="vx-queue-badge" hidden></i></a><a href="#knowledge" data-tab="knowledge">Knowledge</a><a href="#inside" data-tab="inside">Inside the model</a><a href="#try" data-tab="try">Try it</a><a href="#data" data-tab="data">Data &amp; storage</a><a href="#api" data-tab="api">API</a>' : '<a href="#try" data-tab="try">Try it</a><a href="#inside" data-tab="inside">Inside the model</a><a href="#training" data-tab="training">Training</a><a href="#data" data-tab="data">Data &amp; storage</a><a href="#api" data-tab="api">API</a>'}
 </nav>
 
 <main>
-<section id="tab-try" class="tab">
+${live ? '<section id="tab-live" class="tab" hidden><div id="vx-live"></div></section><section id="tab-crm" class="tab" hidden><div id="vx-crm"></div></section><section id="tab-knowledge" class="tab" hidden><div id="vx-knowledge"></div></section>' : ""}
+<section id="tab-try" class="tab"${live ? " hidden" : ""}>
 <div class="hero"><div class="stage"><canvas id="net" aria-label="The strongest connections of the trained model"></canvas>
 <div class="hero-text"><h1>Our own AI that understands salon clients</h1>
 <p class="lead">VoroniX AI reads a client's message in Russian, Kazakh or English and tells the CRM what the client wants: book, ask the price, cancel, complain and more. We collected the phrases, trained the model ourselves and serve it through this API. No paid AI services.</p></div></div>
@@ -81,13 +84,14 @@ export function page(brain: Brain): string {
 <div class="chips" data-for="t2">${chips}</div>
 <button id="go2" type="button">Show the decision</button>
 </div>
-<div class="step"><span class="num">1</span><div><h3>Cut the message into features</h3><p class="note">Whole words, pairs of words, the first 4 letters of long words, and pieces of 3 to 5 letters. Pieces let the model recognise «қанша» inside «қаншадан» or a typo. The signs Features the model never saw in training are ignored.</p>lt; and Features the model never saw in training are ignored.</p>gt; mark the start and end of a word. Features the model never saw in training are ignored.</p><div id="feats" class="feats"></div></div></div>
+<div class="step"><span class="num">1</span><div><h3>Cut the message into features</h3><p class="note">Whole words, pairs of words, the first 4 letters of long words, and pieces of 3 to 5 letters. Pieces let the model recognise «қанша» inside «қаншадан» or a typo. The signs &lt; and &gt; mark the start and end of a word. Features the model never saw in training are ignored.</p><div id="feats" class="feats"></div></div></div>
 <div class="step"><span class="num">2</span><div><h3>Every feature votes for or against every intent</h3><p class="note">The strongest features of this message on the left, the 10 intents on the right. Teal lines vote for, pink lines against; a thicker line is a stronger vote. The circle grows with the intent's score.</p><div class="card vis"><svg id="flow" viewBox="0 0 900 540" role="img" aria-label="How the features of the message vote for each intent"></svg></div></div></div>
 <div class="step"><span class="num">3</span><div><h3>Add up the votes and turn them into a probability</h3><p class="note">For each intent: start value (bias) + sum of votes = z, then the sigmoid 1 / (1 + e<sup>−z</sup>) turns z into a score from 0 to 1. Intents above 0.5 are the answer.</p><div id="math" class="card table"></div></div></div>
 </section>
 
 <section id="tab-training" class="tab" hidden>
 <h1>How it learns</h1>
+${live ? '<div id="vx-training"></div><h2 class="h2">How one training run works</h2>' : ""}
 <p class="lead">Training is a loop. The model reads every phrase, guesses its intents, compares the guess with the right answer and moves each weight a little in the direction that makes the error smaller (gradient descent). One pass over all phrases is an epoch.</p>
 <div class="card"><h2>Replay of a real training run</h2>
 <p class="note" id="split"></p>
@@ -107,7 +111,7 @@ export function page(brain: Brain): string {
 
 <section id="tab-data" class="tab" hidden>
 <h1>Where the data lives</h1>
-<p class="lead">The model is small enough to be rebuilt from a text file every time the service starts. Client messages sent to the API are answered and forgotten.</p>
+${live ? '<div id="vx-data"></div><h2 class="h2">The start data</h2><p class="note">Before it learns anything at work, the model is trained on the start phrases from the repository:</p>' : '<p class="lead">The model is small enough to be rebuilt from a text file every time the service starts. Client messages sent to the API are answered and forgotten.</p>'}
 <div class="pipe">
 <div class="box"><b>1. Text file</b><span>data/phrases.tsv in the GitHub repository</span><em id="s-file"></em></div><div class="arrow">→</div>
 <div class="box"><b>2. Training copies</b><span>Kazakh phrases also without Kazakh letters</span><em id="s-copies"></em></div><div class="arrow">→</div>
@@ -118,7 +122,7 @@ export function page(brain: Brain): string {
 <div class="card"><h2>One line of the data file</h2><p class="note">Language, intents, message, separated by tabs:</p><pre id="sample"></pre></div>
 <div class="card"><h2>What one row of weights looks like</h2><p class="note">Words with the biggest weights in the row of the intent «Asks the price»:</p><div id="topw" class="table"></div></div>
 </div>
-<div class="card"><h2>What is stored, and where</h2>
+<div class="card"${live ? " hidden" : ""}><h2>What is stored, and where</h2>
 <table>
 <tr><th>Thing</th><th>Where</th><th>How long</th></tr>
 <tr><td>Training phrases</td><td>data/phrases.tsv in the repository, versioned with git</td><td>Permanently, every change is in the history</td></tr>
@@ -149,7 +153,7 @@ export function page(brain: Brain): string {
 <p class="note">The key is needed only for the POST requests and only when the server sets <code>VORONIX_AI_KEY</code>. The site uses <code>/demo/classify</code> and <code>/demo/explain</code>, which need no key. Limit: 120 requests per minute per address.</p>
 </section>
 </main>
-<footer>VoroniX AI, part of the VoroniX CRM project. The model is retrained from <code>data/phrases.tsv</code> every time the service starts.</footer>
+<footer>${live ? "VoroniX AI, part of the VoroniX CRM project. Our own model, trained in your browser from the start phrases and everything it learned at work, saved in this site's database." : "VoroniX AI, part of the VoroniX CRM project. The model is retrained from <code>data/phrases.tsv</code> every time the service starts."}</footer>
 </div>
 <script>window.NAMES=${JSON.stringify(LABEL_NAMES)};</script>
 <script src="/app.js"></script>

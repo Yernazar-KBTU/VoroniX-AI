@@ -73,47 +73,79 @@ export class IntentModel {
   }
 
   static train(examples: Example[], opts: TrainOptions = {}): IntentModel {
+    const run = IntentModel.trainer(examples, opts);
+    for (;;) {
+      const r = run.next();
+      if (r.done) return r.value;
+    }
+  }
+
+  /** The same training as train(), but it waits a moment after every epoch, so a page stays responsive and can draw the progress. */
+  static async trainAsync(examples: Example[], opts: TrainOptions = {}): Promise<IntentModel> {
+    const run = IntentModel.trainer(examples, opts);
+    for (;;) {
+      const r = run.next();
+      if (r.done) return r.value;
+      await new Promise((ok) => setTimeout(ok, 0));
+    }
+  }
+
+  /** Training, one epoch per step: yields after every pass over the data and returns the finished model. */
+  static *trainer(examples: Example[], opts: TrainOptions = {}): Generator<{ epoch: number; loss: number }, IntentModel> {
     const { epochs = 60, learningRate = 1, l2 = 1e-4, seed = 7, positiveWeight = 4, onEpoch } = opts;
     const vocab = [...new Set(examples.flatMap((e) => features(e.text)))].sort();
     const index = new Map(vocab.map((f, i) => [f, i]));
     const rows = examples.map((e) => ({ x: features(e.text).map((f) => index.get(f)!), e }));
-    const L = LABELS.length;
-    const K = LANGS.length;
-    const iw = Array.from({ length: L }, () => new Array<number>(vocab.length).fill(0));
-    const ib = new Array<number>(L).fill(0);
-    const lw = Array.from({ length: K }, () => new Array<number>(vocab.length).fill(0));
-    const lb = new Array<number>(K).fill(0);
-
+    const w: Weights = {
+      iw: Array.from({ length: LABELS.length }, () => new Array<number>(vocab.length).fill(0)),
+      ib: new Array<number>(LABELS.length).fill(0),
+      lw: Array.from({ length: LANGS.length }, () => new Array<number>(vocab.length).fill(0)),
+      lb: new Array<number>(LANGS.length).fill(0),
+    };
     for (let epoch = 0; epoch < epochs; epoch++) {
       const lr = learningRate / (1 + epoch * 0.05);
       let loss = 0;
-      for (const { x, e } of shuffle(rows, seed + epoch)) {
-        const scale = 1 / Math.sqrt(x.length);
-        // Intents: gradient of the log loss for every label.
-        for (let l = 0; l < L; l++) {
-          let z = ib[l];
-          for (const f of x) z += iw[l][f] * scale;
-          const yes = e.labels.includes(LABELS[l]);
-          const p = Math.min(Math.max(sigmoid(z), 1e-9), 1 - 1e-9);
-          loss -= yes ? Math.log(p) : Math.log(1 - p);
-          // Each label is rare (about one phrase in ten), so its positive examples weigh more.
-          const g = (sigmoid(z) - (yes ? 1 : 0)) * (yes ? positiveWeight : 1);
-          ib[l] -= lr * g;
-          for (const f of x) iw[l][f] -= lr * (g * scale + l2 * iw[l][f]);
-        }
-        // Language: softmax over ru, kk, en.
-        const z = LANGS.map((_, k) => x.reduce((s, f) => s + lw[k][f] * scale, lb[k]));
-        const p = softmax(z);
-        for (let k = 0; k < K; k++) {
-          const g = p[k] - (LANGS[k] === e.lang ? 1 : 0);
-          lb[k] -= lr * g;
-          for (const f of x) lw[k][f] -= lr * (g * scale + l2 * lw[k][f]);
-        }
-      }
-      onEpoch?.(epoch + 1, loss / (rows.length * L), new IntentModel({ version: "1", vocab, intent: { w: iw, b: ib }, lang: { w: lw, b: lb } }));
+      for (const { x, e } of shuffle(rows, seed + epoch)) loss += step(w, x, e, lr, l2, positiveWeight);
+      loss /= rows.length * LABELS.length;
+      onEpoch?.(epoch + 1, loss, new IntentModel({ version: "1", vocab, intent: { w: w.iw, b: w.ib }, lang: { w: w.lw, b: w.lb } }));
+      yield { epoch: epoch + 1, loss };
     }
     const round = (v: number[]) => v.map((n) => Math.round(n * 1e5) / 1e5);
-    return new IntentModel({ version: "1", vocab, intent: { w: iw.map(round), b: round(ib) }, lang: { w: lw.map(round), b: round(lb) } });
+    return new IntentModel({ version: "1", vocab, intent: { w: w.iw.map(round), b: round(w.ib) }, lang: { w: w.lw.map(round), b: round(w.lb) } });
+  }
+
+  /**
+   * Online learning: the model learns new phrases right away, with the same
+   * gradient step as in train(). Words it has never seen join the vocabulary
+   * with zero weights first. Returns how many features were new.
+   */
+  learn(examples: Example[], opts: { learningRate?: number; l2?: number; positiveWeight?: number } = {}): number {
+    const { learningRate = 0.5, l2 = 1e-4, positiveWeight = 4 } = opts;
+    const j = this.json;
+    let added = 0;
+    for (const e of examples)
+      for (const f of features(e.text))
+        if (!this.index.has(f)) {
+          this.index.set(f, j.vocab.length);
+          j.vocab.push(f);
+          for (const row of j.intent.w) row.push(0);
+          for (const row of j.lang.w) row.push(0);
+          added++;
+        }
+    const w: Weights = { iw: j.intent.w, ib: j.intent.b, lw: j.lang.w, lb: j.lang.b };
+    for (const e of examples) step(w, features(e.text).map((f) => this.index.get(f)!), e, learningRate, l2, positiveWeight);
+    return added;
+  }
+
+  /** The weight that links a feature to an intent (0 for a feature the model does not know). */
+  weight(feature: string, label: Label): number {
+    const i = this.index.get(feature);
+    return i === undefined ? 0 : this.json.intent.w[LABELS.indexOf(label)][i];
+  }
+
+  /** An independent copy, so one model can learn while the other stays as it was. */
+  clone(): IntentModel {
+    return new IntentModel(JSON.parse(JSON.stringify(this.json)) as ModelJson);
   }
 
   toJSON(): ModelJson {
@@ -167,6 +199,40 @@ export class IntentModel {
     if (/[әғқңөұүһі]/i.test(text)) lang = "kk";
     return { intents, scores, lang, lang_scores };
   }
+}
+
+interface Weights {
+  iw: number[][];
+  ib: number[];
+  lw: number[][];
+  lb: number[];
+}
+
+/** One gradient step on one phrase (x = its feature numbers). Returns the phrase's error before the step. */
+function step(w: Weights, x: number[], e: Example, lr: number, l2: number, positiveWeight: number): number {
+  const scale = 1 / Math.sqrt(x.length);
+  let loss = 0;
+  // Intents: gradient of the log loss for every label.
+  for (let l = 0; l < LABELS.length; l++) {
+    let z = w.ib[l];
+    for (const f of x) z += w.iw[l][f] * scale;
+    const yes = e.labels.includes(LABELS[l]);
+    const p = Math.min(Math.max(sigmoid(z), 1e-9), 1 - 1e-9);
+    loss -= yes ? Math.log(p) : Math.log(1 - p);
+    // Each label is rare (about one phrase in ten), so its positive examples weigh more.
+    const g = (sigmoid(z) - (yes ? 1 : 0)) * (yes ? positiveWeight : 1);
+    w.ib[l] -= lr * g;
+    for (const f of x) w.iw[l][f] -= lr * (g * scale + l2 * w.iw[l][f]);
+  }
+  // Language: softmax over ru, kk, en.
+  const z = LANGS.map((_, k) => x.reduce((s, f) => s + w.lw[k][f] * scale, w.lb[k]));
+  const p = softmax(z);
+  for (let k = 0; k < LANGS.length; k++) {
+    const g = p[k] - (LANGS[k] === e.lang ? 1 : 0);
+    w.lb[k] -= lr * g;
+    for (const f of x) w.lw[k][f] -= lr * (g * scale + l2 * w.lw[k][f]);
+  }
+  return loss;
 }
 
 function softmax(z: number[]): number[] {

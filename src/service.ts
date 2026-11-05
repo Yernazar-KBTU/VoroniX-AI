@@ -30,7 +30,7 @@ export interface Brain {
   training(): Training;
   storage(): Record<string, unknown>;
   /** The strongest connections of the whole model, for the picture of the network. */
-  network(limit?: number): { labels: readonly string[]; features: string[]; links: [number, number, number][] };
+  network(limit?: number, model?: IntentModel): { labels: readonly string[]; features: string[]; links: [number, number, number][] };
 }
 
 /** Builds the model. On the server it reads the files; the browser-only demo passes their contents in. */
@@ -77,8 +77,8 @@ export function loadBrain(source?: { text: string; report?: Report }): Brain {
       training = { settings: SETTINGS, split: { train: train.length, test: test.length }, epochs, watch: { text: WATCH_TEXT, labels: LABELS, scores: watch } };
       return training;
     },
-    network(limit = 900) {
-      const json = model.toJSON();
+    network(limit = 900, m: IntentModel = model) {
+      const json = m.toJSON();
       const all: { f: number; l: number; w: number }[] = [];
       json.intent.w.forEach((row, l) => row.forEach((w, f) => Math.abs(w) > 0.3 && all.push({ f, l, w })));
       const top = all.sort((a, b) => Math.abs(b.w) - Math.abs(a.w)).slice(0, Math.min(limit, 3000));

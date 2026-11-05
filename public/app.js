@@ -11,14 +11,17 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 // ---------- tabs ----------
 const loaded = {};
 function show() {
-  const tab = (location.hash || "#try").slice(1);
-  const name = ["try", "inside", "training", "data", "api"].includes(tab) ? tab : "try";
+  const tabs = ["try", "inside", "training", "data", "api"].concat(window.VXUI ? ["live", "crm", "knowledge"] : []);
+  const first = window.VXUI ? "live" : "try";
+  const tab = (location.hash || "#" + first).slice(1);
+  const name = tabs.includes(tab) ? tab : first;
   document.querySelectorAll(".tab").forEach((s) => (s.hidden = s.id !== "tab-" + name));
   document.querySelectorAll(".tabs a").forEach((a) => a.classList.toggle("on", a.dataset.tab === name));
   if (!loaded[name]) {
     loaded[name] = true;
     ({ try: initTry, inside: explain, training: initTraining, data: initData })[name]?.();
   }
+  window.VXUI?.show(name);
 }
 addEventListener("hashchange", show);
 

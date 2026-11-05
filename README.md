@@ -77,6 +77,34 @@ When `VORONIX_AI_KEY` is set, `/v1/classify` and `/v1/explain` need `Authorizati
 - **Training**: a replay of a real training run (80 % of the phrases to learn, 20 % to check) from epoch 0, when the model knows nothing, to epoch 60; settings; every training phrase with filters.
 - **Data & storage**: what is kept where: the phrases file in git, weights only in memory, API messages not stored.
 
+## The live site: VoroniX AI at work
+
+`npm run build:demo` builds one HTML page (`dist-demo/index.html`) where the AI
+works and learns in the browser, with its data in a database
+(`src/live/`, about 2,800 lines). Published copy: https://claude.ai/artifact/WBotxYRsPFsCg7mkdjY1GK
+
+- **Live**: a social inbox (Instagram, Telegram, WhatsApp). Write as a client or play the demo stream (28 clients, 56 messages with words the AI has never seen). For every message: what it understood, its reply, what it did in the CRM and what it learned. A chart compares the learning AI with the same model frozen, measured before each lesson (test-then-train).
+- **CRM**: the calendar the AI books into, every client's memory card (language, services, masters, times, mood, last 14 messages) and staff commands in plain words: «Запиши Алию на завтра в 15:00 на стрижку», «Cancel Bekzat's booking», «Кто не приходил 30 дней?». Writes wait for a confirm click.
+- **Training**: the review queue the AI fills itself (unsure readings, questions without an answer, complaints), teaching by hand, model versions and the learning log.
+- **Knowledge**: texts and files from the business, found with BM25. A person's answer from the queue becomes knowledge at once.
+- **Data & storage**: the 8 collections, their size, the newest documents as saved, export to one JSON file.
+
+How it learns:
+
+1. A phrase is learned when the conversation proves it (a booking confirms the request, «спасибо» confirms the answer), when a person checks the queue, or when the business adds a service (the AI writes 6 phrases about it in three languages).
+2. Online learning: up to 8 small gradient steps until the phrase is read right, each mixed with 4 older phrases so it does not forget (rehearsal).
+3. Every 50 new phrases (25 and 100 can be chosen) the model is retrained. The old data and the new data are both trained without a fifth kept aside and tested on it; the new version goes live only if it is not worse (one test phrase less counts as equal).
+4. The model is not stored. Every page rebuilds it from the saved phrases: the live version, then the later phrases in the order they were learned, each step using only what was known then, so every page runs exactly the same weights (tested).
+
+Storage sits behind one small interface, `Store` in `src/live/store.ts` (read all, save, change, delete, watch): `SiteStore` uses the site's database, `MemoryStore` runs the tests. A server database is one more class with the same five methods.
+
+```bash
+npm run build:demo                      # dist-demo/index.html
+node scripts/e2e-demo.cjs <screenshots> # the whole site in Chromium, with a stand-in database
+```
+
+Limits: the inbox is simulated until the CRM server forwards real messages; the AI runs while the page is open; it answers about the salon from its data and knowledge, and sends any other question to a person.
+
 ## Run
 
 ```bash
