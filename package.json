@@ -1,0 +1,16 @@
+{
+  "name": "@crm/voronix-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "VoroniX AI: our own small language model that understands what a salon client wants (Russian, Kazakh, English), served over an HTTP API.",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "train": "tsx src/train-cli.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  }
+}

@@ -1,0 +1,643 @@
+# VoroniX AI training data: what clients of a barbershop or beauty salon write in chats.
+# Columns: language (ru, kk, en) <TAB> labels separated by commas <TAB> message.
+# Labels: greeting, price, booking, cancel, complaint, address, hours, confirm, thanks, other.
+# A message can have several labels, for example "Hello! How much is a haircut?" is greeting,price.
+lang	labels	text
+ru	greeting	Здравствуйте
+ru	greeting	Привет
+ru	greeting	Добрый день!
+ru	greeting	добрый вечер
+ru	greeting,hours	Доброе утро, вы работаете?
+ru	greeting	здрасьте
+ru	greeting	Приветствую
+ru	greeting	салам
+ru	price	Сколько стоит стрижка?
+ru	price	Какая цена на мужскую стрижку
+ru	price	сколько стоит покраска волос
+ru	price	Прайс можно?
+ru	price	Скиньте прайс пожалуйста
+ru	price	Какие у вас цены?
+ru	price	сколько будет стоить борода и стрижка вместе
+ru	price	Стоимость маникюра?
+ru	price	А по деньгам сколько выйдет
+ru	price	почем детская стрижка
+ru	price	Цена на окрашивание седины
+ru	price	во сколько обойдется VIP ритуал
+ru	price	сколько стоит?
+ru	price	а сколько это стоит
+ru	booking	Хочу записаться на стрижку
+ru	booking	Можно записаться на завтра?
+ru	booking	Запишите меня на пятницу в 18:00
+ru	booking	Есть свободное время в субботу?
+ru	booking	хочу к Тимуру на завтра
+ru	booking	Можно на сегодня вечером?
+ru	booking	Есть окошко после 19?
+ru	booking	хочу подстричься в среду после работы
+ru	booking	Запись на маникюр есть на этой неделе?
+ru	booking	когда можно прийти на бороду
+ru	booking	Мне нужна стрижка машинкой, когда ближайшее время?
+ru	booking	давайте на 17:30
+ru	booking	Можно в четверг утром?
+ru	booking	хочу записать сына на детскую стрижку
+ru	booking	Свободно ли завтра в 12?
+ru	booking	запишите на бритье
+ru	booking	Есть места на выходных?
+ru	booking	Мне бы постричься
+ru	greeting,price	Здравствуйте! Сколько стоит стрижка?
+ru	greeting,booking	Привет, хочу записаться на завтра
+ru	greeting,price,booking	Здравствуйте! Сколько стоит VIP-ритуал? Можно в среду вечером?
+ru	price,booking	Сколько стоит маникюр и есть ли время в пятницу?
+ru	greeting,booking	Добрый день, можно к мастеру на субботу?
+ru	cancel	Хочу отменить запись
+ru	cancel	Отмените пожалуйста мою запись
+ru	cancel	я не смогу прийти завтра
+ru	cancel	Не приду, отменяйте
+ru	cancel	можно отменить визит
+ru	cancel	К сожалению планы поменялись, отмените
+ru	cancel	уберите мою запись на пятницу
+ru	cancel	Отмена записи
+ru	complaint	Мне испортили стрижку, я очень недоволен
+ru	complaint	Это ужас, верните деньги
+ru	complaint	Хочу оставить жалобу на мастера
+ru	complaint	после покраски ожог на коже
+ru	complaint	у меня аллергия после процедуры
+ru	complaint	Отвратительное обслуживание
+ru	complaint	мастер опоздал на час, я недоволен
+ru	complaint	хочу возврат денег
+ru	complaint	ноготь сломали на маникюре, кто ответит?
+ru	complaint	Почему мне нахамили на ресепшене?
+ru	address	Где вы находитесь?
+ru	address	Какой у вас адрес
+ru	address	как до вас добраться
+ru	address	Есть парковка рядом?
+ru	address	скиньте локацию
+ru	address	Вы в каком районе?
+ru	address	адрес подскажите
+ru	hours	До скольки вы работаете?
+ru	hours	Какой у вас график работы
+ru	hours	Во сколько открываетесь?
+ru	hours	вы работаете в воскресенье?
+ru	hours	часы работы какие
+ru	hours	Работаете сегодня до 21?
+ru	hours,address	Где вы находитесь и до скольки работаете?
+ru	confirm	Да
+ru	confirm	да, подходит
+ru	confirm	Давайте
+ru	confirm	ок
+ru	confirm	Хорошо, первый вариант
+ru	confirm	Отлично, давайте так
+ru	confirm	Ага
+ru	confirm	да давайте второй
+ru	confirm	Подходит, записывайте
+ru	thanks	Спасибо
+ru	thanks	Спасибо большое!
+ru	thanks	благодарю
+ru	thanks	спс
+ru	thanks	Спасибо, до встречи
+ru	confirm,thanks	да, спасибо
+ru	other	А у вас есть вайфай?
+ru	other	Вы продаете шампуни?
+ru	other	можно с собакой?
+ru	other	Меня зовут Алия
+ru	other	+7 701 555 11 22
+ru	other	Арман
+ru	other	Можно оплатить картой?
+ru	other	у вас есть подарочные сертификаты?
+ru	other	Какой мастер лучше?
+ru	other	ищу работу барбером
+kk	greeting	Сәлеметсіз бе
+kk	greeting	Сәлем
+kk	greeting	Қайырлы күн!
+kk	greeting	Қайырлы кеш
+kk	greeting,hours	Қайырлы таң, жұмыс істеп тұрсыздар ма?
+kk	greeting	Ассалаумағалейкум
+kk	greeting	салеметсиз бе
+kk	greeting	салем
+kk	price	Шаш қию қанша тұрады?
+kk	price	Ер адамның шаш қиюы қанша тұрады
+kk	price	Бағасы қанша?
+kk	price	Шашты бояу қанша болады
+kk	price	Прайс жіберіңізші
+kk	price	Бағаларыңыз қандай?
+kk	price	Маникюрдің бағасы қандай?
+kk	price	Сақал түзету неше теңге?
+kk	price	канша турады
+kk	price	Балалар шаш қиюы қанша?
+kk	price	VIP ритуал қанша тұрады?
+kk	price	Шаш қию мен сақал бірге қанша болады
+kk	booking	Шаш қиюға жазылғым келеді
+kk	booking	Ертеңге жазылуға бола ма?
+kk	booking	Жұма күні сағат 18:00-ге жазыңызшы
+kk	booking	Сенбіде бос уақыт бар ма?
+kk	booking	Бүгін кешке бола ма?
+kk	booking	Тимурға ертеңге жазылайын
+kk	booking	Сәрсенбі күні жұмыстан кейін келсем бола ма
+kk	booking	Осы аптада маникюрге орын бар ма?
+kk	booking	Сақалға қашан келуге болады?
+kk	booking	Ең жақын бос уақыт қашан?
+kk	booking	Бейсенбі таңертең бола ма?
+kk	booking	Ұлымды балалар шаш қиюына жазғым келеді
+kk	booking	Ертең сағат 12-де бос па?
+kk	booking	Демалыс күндері орын бар ма?
+kk	booking	Шаш алдырғым келеді
+kk	booking	жазылгым келед
+kk	booking	17:30-ға жазыңыз
+kk	booking	Сағат 19-дан кейін бос орын бар ма?
+kk	greeting,price	Сәлеметсіз бе! Шаш қию қанша тұрады?
+kk	greeting,booking	Сәлем, ертеңге жазылғым келеді
+kk	greeting,price,booking	Сәлеметсіз бе! VIP ритуал қанша тұрады? Сәрсенбі кешке бола ма?
+kk	price,booking	Маникюр қанша тұрады және жұмада уақыт бар ма?
+kk	greeting,booking	Қайырлы күн, сенбіге шеберге жазылуға бола ма?
+kk	cancel	Жазылуымды болдырмауыңызды сұраймын
+kk	cancel	Жазбамды алып тастаңызшы
+kk	cancel	Ертең келе алмаймын
+kk	cancel	Келмеймін, жазылуды өшіріңіз
+kk	cancel	Жазылудан бас тартамын
+kk	cancel	Жоспарым өзгерді, жазбамды өшіріңізші
+kk	cancel	Жұмадағы жазбамды алып тастаңыз
+kk	cancel	отмена жасаңызшы
+kk	complaint	Шашымды бүлдіріп тастады, мен өте наразымын
+kk	complaint	Бұл сұмдық, ақшамды қайтарыңыз
+kk	complaint	Шебер туралы шағым қалдырғым келеді
+kk	complaint	Бояудан кейін терім күйіп қалды
+kk	complaint	Процедурадан кейін аллергия шықты
+kk	complaint	Қызмет көрсету өте нашар
+kk	complaint	Шебер бір сағат кешікті, мен наразымын
+kk	complaint	Ақшамды қайтаруды сұраймын
+kk	complaint	Маникюрде тырнағымды сындырып алды
+kk	complaint	Неге маған дөрекі сөйледіңіздер?
+kk	address	Сіздер қайдасыздар?
+kk	address	Мекенжайыңыз қандай?
+kk	address	Сіздерге қалай жетуге болады?
+kk	address	Жаныңызда көлік тұрағы бар ма?
+kk	address	Локация жіберіңізші
+kk	address	Қай ауданда орналасқансыздар?
+kk	address	мекенжай қандай
+kk	hours	Сағат нешеге дейін жұмыс істейсіздер?
+kk	hours	Жұмыс кестеңіз қандай?
+kk	hours	Сағат нешеде ашыласыздар?
+kk	hours	Жексенбі күні жұмыс істейсіздер ме?
+kk	hours	Бүгін 21-ге дейін ашықсыздар ма?
+kk	hours	Жұмыс уақыты қандай
+kk	hours,address	Қайдасыздар және нешеге дейін жұмыс істейсіздер?
+kk	confirm	Иә
+kk	confirm	Иә, сәйкес келеді
+kk	confirm	Жарайды
+kk	confirm	Болады
+kk	confirm	Жақсы, бірінші нұсқа
+kk	confirm	Келістік
+kk	confirm	Иә, екіншісі
+kk	confirm	Ия, жаза беріңіз
+kk	confirm	Мақұл
+kk	thanks	Рахмет
+kk	thanks	Көп рахмет!
+kk	thanks	Рақмет
+kk	thanks	Рахмет, кездескенше
+kk	thanks	Сізге рахмет
+kk	thanks	Алғыс айтамын
+kk	confirm,thanks	Иә, рахмет
+kk	other	Сіздерде wifi бар ма?
+kk	other	Шампунь сатасыздар ма?
+kk	other	Менің атым Әлия
+kk	other	Айгерім
+kk	other	Картамен төлеуге бола ма?
+kk	other	Сыйлық сертификаты бар ма?
+kk	other	Қай шебер жақсырақ?
+kk	other	Барбер болып жұмыс іздеп жүрмін
+kk	other	Итпен келуге бола ма?
+en	greeting	Hello
+en	greeting	Hi
+en	greeting	Good afternoon!
+en	greeting	good evening
+en	greeting,hours	Good morning, are you open?
+en	greeting	hey there
+en	greeting	Hi guys
+en	price	How much is a haircut?
+en	price	What is the price for a men's haircut
+en	price	how much does hair colouring cost
+en	price	Can I see the price list?
+en	price	Send me your prices please
+en	price	What are your rates?
+en	price	how much for a beard trim and haircut together
+en	price	Manicure price?
+en	price	how much will it be
+en	price	kids haircut cost?
+en	price	How much is the VIP ritual
+en	price	what does it cost
+en	booking	I want to book a haircut
+en	booking	Can I book for tomorrow?
+en	booking	Book me in on Friday at 6 pm
+en	booking	Do you have any free time on Saturday?
+en	booking	I'd like to see Timur tomorrow
+en	booking	Can I come today in the evening?
+en	booking	Any slot after 7?
+en	booking	I want a haircut on Wednesday after work
+en	booking	Do you have a manicure slot this week?
+en	booking	when can I come for a beard trim
+en	booking	I need a clipper cut, what is the earliest time?
+en	booking	let's do 5:30
+en	booking	Can I come Thursday morning?
+en	booking	I want to book my son for a kids haircut
+en	booking	Is tomorrow at 12 free?
+en	booking	book me for a shave
+en	booking	Any openings at the weekend?
+en	greeting,price	Hi! How much is a haircut?
+en	greeting,booking	Hello, I'd like to book for tomorrow
+en	greeting,price,booking	Hello! How much is the VIP ritual? Can I come Wednesday evening?
+en	price,booking	How much is a manicure and do you have time on Friday?
+en	cancel	I want to cancel my booking
+en	cancel	Please cancel my appointment
+en	cancel	I can't make it tomorrow
+en	cancel	I won't come, please cancel
+en	cancel	can I cancel my visit
+en	cancel	Plans changed, cancel it please
+en	cancel	remove my Friday appointment
+en	complaint	You ruined my haircut, I am very unhappy
+en	complaint	This is terrible, I want my money back
+en	complaint	I want to complain about the barber
+en	complaint	I got a burn on my skin after colouring
+en	complaint	I have an allergic reaction after the treatment
+en	complaint	Awful service
+en	complaint	The barber was an hour late, not happy
+en	complaint	I want a refund
+en	complaint	my nail was broken during the manicure
+en	complaint	Why was the receptionist so rude to me?
+en	address	Where are you located?
+en	address	What is your address
+en	address	how do I get to you
+en	address	Is there parking nearby?
+en	address	send me the location
+en	address	Which part of town are you in?
+en	hours	What time do you close?
+en	hours	What are your opening hours
+en	hours	When do you open?
+en	hours	are you open on Sunday?
+en	hours	Are you open until 9 today?
+en	hours,address	Where are you and how late are you open?
+en	confirm	Yes
+en	confirm	yes, that works
+en	confirm	Sure
+en	confirm	ok
+en	confirm	Great, the first one
+en	confirm	Perfect, let's do it
+en	confirm	yep
+en	confirm	yes the second one please
+en	confirm	Sounds good, book it
+en	thanks	Thanks
+en	thanks	Thank you so much!
+en	thanks	thx
+en	thanks	Thanks, see you
+en	thanks	much appreciated
+en	confirm,thanks	yes, thank you
+en	other	Do you have wifi?
+en	other	Do you sell shampoo?
+en	other	Can I bring my dog?
+en	other	My name is Aliya
+en	other	Daniel
+en	other	Can I pay by card?
+en	other	Do you have gift cards?
+en	other	Which barber is the best?
+en	other	I am looking for a job as a barber
+ru	greeting	Здравствуйте, это барбершоп?
+ru	greeting	хай
+ru	greeting	Добрый день, подскажите пожалуйста
+ru	greeting	Привет, на связи?
+ru	price	А сколько стоит у вас бритье опасной бритвой
+ru	price	цены на педикюр какие
+ru	price	Сколько стоит покрасить брови
+ru	price	напишите стоимость услуг
+ru	price	во сколько обойдется стрижка с укладкой
+ru	price	это дорого? сколько точно
+ru	price	Подскажите цену на камуфляж седины
+ru	price	сколько платить за детскую
+ru	price	Есть ли скидки и сколько стоит стрижка
+ru	booking	Можно записаться к Арману?
+ru	booking	Хочу прийти в понедельник
+ru	booking	Есть время на завтра после обеда?
+ru	booking	Запишите на 15:00 пожалуйста
+ru	booking	А на послезавтра есть?
+ru	booking	хочу на маникюр в субботу утром
+ru	booking	Когда ближайшая свободная запись?
+ru	booking	можно сегодня подойти?
+ru	booking	мне нужно подровнять бороду в пятницу
+ru	booking	В 10 утра свободно?
+ru	booking	Хочу записаться на окрашивание на следующей неделе
+ru	booking	можно на 12.11 в 16:00
+ru	booking	Давайте лучше в 19:00
+ru	booking	А другое время есть?
+ru	booking	хочу записаться
+ru	cancel	Отменяю запись
+ru	cancel	Мне нужно отменить запись на завтра
+ru	cancel	не получится прийти, отмените пожалуйста
+ru	cancel	Заболел, не приду
+ru	cancel	снимите бронь
+ru	complaint	мне не понравилось как постригли, хочу пожаловаться
+ru	complaint	Вы списали деньги дважды, верните
+ru	complaint	Ужасная стрижка, неровно
+ru	complaint	После маникюра палец опух
+ru	complaint	Очень недоволен мастером
+ru	complaint	меня не приняли хотя я был записан, безобразие
+ru	address	Где вас найти?
+ru	address	На какой улице вы?
+ru	address	Вы где? Отправьте адрес
+ru	address	Как вас найти в 2ГИС
+ru	address	Какой ориентир рядом с вами
+ru	hours	Вы завтра работаете?
+ru	hours	Режим работы подскажите
+ru	hours	в какое время вы открыты
+ru	hours	До какого часа можно прийти
+ru	hours	Выходные у вас есть?
+ru	confirm	Да, записывайте
+ru	confirm	Окей
+ru	confirm	годится
+ru	confirm	Супер, давайте
+ru	confirm,booking	да 18:30 подходит
+ru	confirm	Подтверждаю
+ru	thanks	спасибо, все понятно
+ru	thanks	Благодарю за помощь
+ru	thanks	Спасибо вам огромное
+ru	thanks	Пасиб
+ru	other	Можно прийти с ребенком?
+ru	other	у вас есть кофе
+ru	other	Я Данияр
+ru	other	Мой номер 87015551122
+ru	other	Кто у вас лучший мастер по бороде?
+ru	other	можно оплатить через Kaspi?
+ru	other	У вас есть кондиционер?
+ru	other	Сколько у вас мастеров?
+kk	greeting	Сәлеметсіздер ме
+kk	greeting	Сәлем, барбершоп па?
+kk	greeting	Қайырлы күн, көмектесіңізші
+kk	greeting	Сәлем! Байланыстасыз ба?
+kk	greeting	Армысыздар
+kk	price	Ұстарамен қыру қанша тұрады?
+kk	price	Педикюр бағасы қандай?
+kk	price	Қасты бояу қанша тұрады?
+kk	price	Қызметтердің бағасын жазыңызшы
+kk	price	Шаш қию мен сәндеу қанша болады?
+kk	price	Қымбат па? Нақты қанша?
+kk	price	Ақ шашты бояудың бағасы қанша?
+kk	price	Балаға қанша төлеу керек?
+kk	price	Жеңілдік бар ма, шаш қию қанша?
+kk	booking	Арманға жазылуға бола ма?
+kk	booking	Дүйсенбіде келгім келеді
+kk	booking	Ертең түстен кейін уақыт бар ма?
+kk	booking	15:00-ге жазыңызшы
+kk	booking	Бүрсігүнге орын бар ма?
+kk	booking	Сенбі таңертең маникюрге жазылғым келеді
+kk	booking	Ең жақын бос жазылу қашан?
+kk	booking	Бүгін келуге бола ма?
+kk	booking	Жұма күні сақалымды түзеткім келеді
+kk	booking	Таңғы 10-да бос па?
+kk	booking	Келесі аптада шаш бояуға жазылғым келеді
+kk	booking	12.11 сағат 16:00-ге бола ма
+kk	booking	19:00 жақсырақ
+kk	booking	Басқа уақыт бар ма?
+kk	booking	жазылғым келеді
+kk	cancel	Жазылуымды өшіріңізші
+kk	cancel	Ертеңгі жазбамды болдырмау керек
+kk	cancel	Келе алмаймын, жазбаны өшіріп тастаңыз
+kk	cancel	Ауырып қалдым, келмеймін
+kk	cancel	Броньды алып тастаңыз
+kk	complaint	Шашымды жаман қиды, шағымданғым келеді
+kk	complaint	Ақшаны екі рет алдыңыздар, қайтарыңыз
+kk	complaint	Сұмдық шаш қию, тегіс емес
+kk	complaint	Маникюрден кейін саусағым ісіп кетті
+kk	complaint	Шеберге өте наразымын
+kk	complaint	Жазылып едім, бірақ қабылдамады, ұят
+kk	address	Сіздерді қалай табуға болады?
+kk	address	Қай көшедесіздер?
+kk	address	Қайдасыздар? Мекенжай жіберіңіз
+kk	address	2ГИС-тен қалай табамын
+kk	address	Жаныңызда қандай белгі бар
+kk	hours	Ертең жұмыс істейсіздер ме?
+kk	hours	Жұмыс тәртібін айтыңызшы
+kk	hours	Қай уақытта ашықсыздар
+kk	hours	Сағат нешеге дейін келуге болады
+kk	hours	Демалыс күндеріңіз бар ма?
+kk	confirm	Иә, жаза беріңіз
+kk	confirm	Келеді
+kk	confirm	Керемет, солай болсын
+kk	confirm,booking	Иә, 18:30 ыңғайлы
+kk	confirm	Растаймын
+kk	thanks	Рахмет, бәрі түсінікті
+kk	thanks	Көмегіңізге рахмет
+kk	thanks	Үлкен рахмет сізге
+kk	thanks	рахмет көп
+kk	other	Баламмен келуге бола ма?
+kk	other	Кофе бар ма?
+kk	other	Мен Данияр
+kk	other	Нөмірім 87015551122
+kk	other	Сақал бойынша ең жақсы шебер кім?
+kk	other	Kaspi арқылы төлеуге бола ма?
+kk	other	Кондиционер бар ма?
+kk	other	Қанша шебер бар?
+en	greeting	Hello, is this the barbershop?
+en	greeting	yo
+en	greeting	Good day, could you help me
+en	greeting	Hi, are you there?
+en	price	How much is a straight razor shave
+en	price	what are the pedicure prices
+en	price	How much to tint eyebrows
+en	price	please write the cost of your services
+en	price	how much is a haircut with styling
+en	price	is it expensive? how much exactly
+en	price	What's the price for grey camouflage
+en	price	how much do I pay for a kid
+en	price	Any discounts, and how much is a haircut
+en	booking	Can I book with Arman?
+en	booking	I want to come on Monday
+en	booking	Is there time tomorrow afternoon?
+en	booking	Book me for 3 pm please
+en	booking	Anything the day after tomorrow?
+en	booking	I'd like a manicure on Saturday morning
+en	booking	When is the next free appointment?
+en	booking	can I drop by today?
+en	booking	I need my beard trimmed on Friday
+en	booking	Is 10 am free?
+en	booking	I want to book colouring next week
+en	booking	can I come on 12.11 at 16:00
+en	booking	Let's make it 19:00 instead
+en	booking	Do you have another time?
+en	booking	i want to book
+en	cancel	I'm cancelling my appointment
+en	cancel	I need to cancel tomorrow's booking
+en	cancel	can't come, please cancel
+en	cancel	I'm sick, won't come
+en	cancel	drop my reservation
+en	complaint	I didn't like my haircut, I want to complain
+en	complaint	You charged me twice, give it back
+en	complaint	Horrible haircut, it's uneven
+en	complaint	My finger is swollen after the manicure
+en	complaint	Very unhappy with the barber
+en	complaint	I had a booking but you didn't take me, outrageous
+en	address	How can I find you?
+en	address	What street are you on?
+en	address	Where are you? Send the address
+en	address	how do I find you on the map
+en	address	Any landmark near you
+en	hours	Are you working tomorrow?
+en	hours	Tell me your schedule
+en	hours	what time are you open
+en	hours	How late can I come
+en	hours	Do you have days off?
+en	confirm	Yes, book me
+en	confirm	Okay
+en	confirm	works for me
+en	confirm	Great, go ahead
+en	confirm,booking	yes 18:30 is fine
+en	confirm	Confirmed
+en	thanks	thanks, all clear
+en	thanks	Thanks for your help
+en	thanks	Thank you very much
+en	thanks	ty
+en	other	Can I come with my kid?
+en	other	do you have coffee
+en	other	I'm Daniyar
+en	other	My number is 4155550132
+en	other	Who is your best beard barber?
+en	other	can I pay with Apple Pay?
+en	other	Do you have air conditioning?
+en	other	How many barbers do you have?
+ru	greeting,price	Добрый вечер, какие цены на стрижку?
+ru	greeting,cancel	Здравствуйте, хочу отменить запись
+ru	greeting,address	Привет! Где вы находитесь?
+ru	greeting,hours	Добрый день, до скольки вы сегодня?
+ru	greeting,complaint	Здравствуйте, у меня жалоба на мастера
+ru	price	Почем у вас стрижки
+ru	price	сколько стоит укладка
+ru	price	Стоимость окрашивания какая?
+ru	booking	Когда можно к вам прийти?
+ru	booking	на какое время можно записаться
+ru	booking	Свободно завтра утром?
+ru	booking	можно ли в воскресенье подстричься
+ru	booking	Хочу к любому мастеру на сегодня
+ru	booking	есть ли запись на 14:00
+ru	booking	Хотел бы записаться на бритье в четверг
+ru	cancel	я передумал, отмените
+ru	cancel	Запись больше не нужна
+ru	cancel	можно убрать бронь на завтра
+ru	cancel	не смогу, отмените визит
+ru	complaint	Это безобразие
+ru	complaint	Мне грубо ответили, я в шоке
+ru	complaint	Плохая стрижка, переделайте или верните деньги
+ru	complaint	Я хочу подать жалобу
+ru	complaint	у меня раздражение после бритья
+ru	complaint	Обслуживание ужасное
+ru	address	напишите где вы
+ru	address	В каком торговом центре вы?
+ru	hours	Вы сегодня открыты?
+ru	hours	С какого времени работаете?
+ru	hours	Работаете по воскресеньям?
+ru	hours	когда вы закрываетесь
+ru	confirm	Давайте первое время
+ru	confirm	Хорошо, договорились
+ru	confirm	Отлично, второй вариант
+ru	confirm	Да, это время подходит
+ru	confirm	Идет
+ru	confirm	Норм, записывайте
+ru	thanks	спасибо, жду
+ru	thanks	Спасибо за ответ
+ru	other	что такое VIP ритуал?
+ru	other	у вас мужской или женский салон?
+ru	other	Алия, 87071234567
+ru	other	как зовут мастера?
+kk	greeting,price	Қайырлы кеш, шаш қиюдың бағасы қандай?
+kk	greeting,cancel	Сәлеметсіз бе, жазылуымды өшіргім келеді
+kk	greeting,address	Сәлем! Қайдасыздар?
+kk	greeting,hours	Қайырлы күн, бүгін нешеге дейін жұмыс істейсіздер?
+kk	greeting,complaint	Сәлеметсіз бе, шебер туралы шағымым бар
+kk	price	Шаш қию қанша
+kk	price	Сәндеу қанша тұрады
+kk	price	Бояудың құны қандай?
+kk	price	шаш кию канша турады
+kk	price	багасы канша
+kk	booking	Сіздерге қашан келуге болады?
+kk	booking	Қай уақытқа жазылуға болады
+kk	booking	Ертең таңертең бос па?
+kk	booking	Жексенбіде шаш қиюға бола ма
+kk	booking	Бүгінге кез келген шеберге жазылғым келеді
+kk	booking	14:00-ге жазылу бар ма
+kk	booking	Бейсенбіде қырынуға жазылғым келеді
+kk	booking	ертенге жазылуга бола ма
+kk	booking	бос уакыт бар ма
+kk	cancel	Ойымнан айныдым, өшіріңіз
+kk	cancel	Жазылу енді керек емес
+kk	cancel	Ертеңгі броньды алып тастауға бола ма
+kk	cancel	Келе алмаймын, жазылуды болдырмаңыз
+kk	cancel	жазылуды ошириниз
+kk	complaint	Бұл масқара
+kk	complaint	Маған дөрекі жауап берді, таңғалдым
+kk	complaint	Нашар шаш қию, қайта жасаңыз немесе ақшаны қайтарыңыз
+kk	complaint	Шағым бергім келеді
+kk	complaint	Қырынудан кейін терім тітіркенді
+kk	complaint	Қызмет көрсету сұмдық
+kk	address	Қайда екеніңізді жазыңызшы
+kk	address	Қай сауда орталығындасыздар?
+kk	address	мекенжайыныз кандай
+kk	hours	Бүгін ашықсыздар ма?
+kk	hours	Нешеден бастап жұмыс істейсіздер?
+kk	hours	Жексенбі сайын жұмыс істейсіздер ме?
+kk	hours	Қашан жабыласыздар
+kk	hours	нешеге дейин жумыс истейсиздер
+kk	confirm	Бірінші уақыт болсын
+kk	confirm	Жақсы, келістік
+kk	confirm	Керемет, екінші нұсқа
+kk	confirm	Иә, бұл уақыт ыңғайлы
+kk	confirm	Жарайды, жазыңыз
+kk	confirm	ия
+kk	thanks	Рахмет, күтемін
+kk	thanks	Жауабыңызға рахмет
+kk	other	VIP ритуал деген не?
+kk	other	Ерлер салоны ма, әйелдер салоны ма?
+kk	other	Әлия, 87071234567
+kk	other	Шебердің аты кім?
+en	greeting,price	Good evening, what are your haircut prices?
+en	greeting,cancel	Hello, I want to cancel my booking
+en	greeting,address	Hi! Where are you located?
+en	greeting,hours	Good afternoon, how late are you open today?
+en	greeting,complaint	Hello, I have a complaint about the barber
+en	price	How much are your haircuts
+en	price	how much is styling
+en	price	What does colouring cost?
+en	booking	When can I come to you?
+en	booking	what time can I book
+en	booking	Free tomorrow morning?
+en	booking	can I get a haircut on Sunday
+en	booking	I want any barber today
+en	booking	is 14:00 available
+en	booking	I'd like to book a shave on Thursday
+en	cancel	I changed my mind, cancel it
+en	cancel	I don't need the booking anymore
+en	cancel	can you remove tomorrow's reservation
+en	cancel	can't make it, cancel the visit
+en	complaint	This is outrageous
+en	complaint	Your staff was rude to me, I'm shocked
+en	complaint	Bad haircut, fix it or refund me
+en	complaint	I want to file a complaint
+en	complaint	my skin is irritated after the shave
+en	complaint	The service is horrible
+en	address	write where you are
+en	address	Which mall are you in?
+en	hours	Are you open today?
+en	hours	From what time do you work?
+en	hours	Do you work on Sundays?
+en	hours	when do you close
+en	confirm	The first time please
+en	confirm	Alright, deal
+en	confirm	Great, the second option
+en	confirm	Yes, that time works
+en	confirm	Fine, book me in
+en	confirm	yeah
+en	thanks	thanks, waiting
+en	thanks	Thanks for the answer
+en	other	what is the VIP ritual?
+en	other	is it a men's or women's salon?
+en	other	Aliya, 4155551234
+en	other	what is the barber's name?
+ru	greeting	Здравствуйте, подскажите пожалуйста!
+kk	other	Менің нөмірім 8 777 123 45 67
+en	other	my phone is 415 555 0132 if needed
+kk	thanks	рахмет сізге көп
+en	greeting	Hello, anyone here?
+kk	confirm	Ок, келістік
