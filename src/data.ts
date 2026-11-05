@@ -16,7 +16,11 @@ export const DATA_FILE = fileURLToPath(new URL("../data/phrases.tsv", import.met
 
 /** Reads the training phrases. Lines starting with # are comments, the first other line is the header. */
 export function loadExamples(file = DATA_FILE): Example[] {
-  const rows = readFileSync(file, "utf8").split(/\r?\n/).filter((l) => l.trim() && !l.startsWith("#"));
+  return parseExamples(readFileSync(file, "utf8"));
+}
+
+export function parseExamples(text: string): Example[] {
+  const rows = text.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith("#"));
   return rows.slice(1).map((row, i) => {
     const [lang, labels, text] = row.split("\t");
     const ls = labels?.split(",").map((s) => s.trim()) ?? [];

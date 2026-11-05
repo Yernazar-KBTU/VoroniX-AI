@@ -10,6 +10,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "train": "tsx src/train-cli.ts",
+    "build:demo": "tsx scripts/build-demo.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   }

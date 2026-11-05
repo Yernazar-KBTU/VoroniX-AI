@@ -1,6 +1,6 @@
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { augment, DATA_FILE, LABELS, LANGS, loadExamples, type Example } from "./data.js";
+import { augment, DATA_FILE, LABELS, LANGS, parseExamples, type Example } from "./data.js";
 import { evaluate, folds, score, type Report } from "./evaluate.js";
 import { IntentModel, type Explanation, type Prediction, type TrainOptions } from "./model.js";
 
@@ -33,12 +33,14 @@ export interface Brain {
   network(limit?: number): { labels: readonly string[]; features: string[]; links: [number, number, number][] };
 }
 
-export function loadBrain(): Brain {
-  const examples = loadExamples();
+/** Builds the model. On the server it reads the files; the browser-only demo passes their contents in. */
+export function loadBrain(source?: { text: string; report?: Report }): Brain {
+  const text = source?.text ?? readFileSync(DATA_FILE, "utf8");
+  const examples = parseExamples(text);
   const model = IntentModel.train(augment(examples));
   let report: Report;
   try {
-    report = JSON.parse(readFileSync(REPORT_FILE, "utf8"));
+    report = source ? (source.report ?? evaluate(examples)) : JSON.parse(readFileSync(REPORT_FILE, "utf8"));
   } catch {
     report = evaluate(examples);
   }
@@ -100,7 +102,7 @@ export function loadBrain(): Brain {
         .slice(0, 12)
         .map((x) => ({ feature: x.feature.slice(2), weight: round(x.weight) }));
       return {
-        data_file: { name: "data/phrases.tsv", bytes: statSync(DATA_FILE).size, phrases: examples.length, columns: ["lang", "labels", "text"], sample: readFileSync(DATA_FILE, "utf8").split("\n").filter((l) => /^(ru|kk|en)\t/.test(l)).filter((_, i) => i % 211 === 5).slice(0, 3) },
+        data_file: { name: "data/phrases.tsv", bytes: new TextEncoder().encode(text).length, phrases: examples.length, columns: ["lang", "labels", "text"], sample: text.split("\n").filter((l) => /^(ru|kk|en)\t/.test(l)).filter((_, i) => i % 211 === 5).slice(0, 3) },
         training_copies: augment(examples).length - examples.length,
         vocabulary: { size: json.vocab.length, ...kinds },
         weights: { intent_rows: json.intent.w.length, language_rows: json.lang.w.length, numbers: model.weightCount, megabytes_in_memory: round((model.weightCount * 8) / 1e6) },
