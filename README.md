@@ -40,7 +40,7 @@ A message can have several intents: «Здравствуйте! Сколько �
 
 The project's NFR-02 asks for 95%. More phrases are the way there: going from 297 to 638 phrases took exact match from 57% to 76%. Add phrases to `data/phrases.tsv`, then run `npm run train` and commit the new report (a test checks that it is current).
 
-In the CRM the model works together with the old rules: an intent counts when either sees it, so the model adds what the rules miss (for example the Kazakh complaint «Маған мүлдем ұнамады, қызмет нашар») and the CRM keeps working when the service is down.
+In the CRM the model works together with the old rules: an intent counts when either sees it, so the model adds what the rules miss (for example the Kazakh complaint «Маған мүлдем ұнамады, қызмет нашар»). If the service is configured but down, the CRM gives no automatic answer: the chat gets a system message with the reason, waits for a person (needs_human), and the sidebar and /api/health show "VoroniX AI is DOWN". The basic rules answer alone only when VORONIX_AI_URL is not set at all.
 
 ## API
 
