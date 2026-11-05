@@ -1,9 +1,10 @@
 // VoroniX AI: a separate web service with its own API. It understands what a
 // client of a salon wants (intents) and in which language they write.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { page } from "./page.js";
+import { Brains } from "./brains.js";
 import { loadBrain, type Brain } from "./service.js";
 
 export interface Options {
@@ -12,7 +13,12 @@ export interface Options {
   /** Requests per minute for one IP address. */
   rateLimit?: number;
   brain?: Brain;
+  /** The VoroniX data server (the CRM's database). With it the AI answers clients for the CRM: POST /v1/reply. */
+  dataUrl?: string;
 }
+
+/** The VoroniX AI site (npm run build:demo). On a server it shows this server's AI, live. */
+const SITE = new URL("../dist-demo/index.html", import.meta.url);
 
 const MAX_TEXT = 1000;
 const MAX_BATCH = 50;
@@ -21,6 +27,7 @@ export function createAiServer(opts: Options = {}): Server {
   const brain = opts.brain ?? loadBrain();
   const limit = opts.rateLimit ?? 120;
   const hits = new Map<string, { n: number; until: number }>();
+  const brains = opts.dataUrl ? new Brains(brain, opts.dataUrl) : null;
 
   const allowed = (ip: string) => {
     const now = Date.now();
@@ -48,7 +55,21 @@ export function createAiServer(opts: Options = {}): Server {
         res.setHeader("Cache-Control", "public, max-age=300");
         return end(res, 200, readFileSync(new URL(`../public${url.pathname}`, import.meta.url), "utf8"));
       }
-      if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true });
+      if (req.method === "GET" && url.pathname === "/health") return json(res, 200, { ok: true, crm: !!brains });
+      if (req.method === "GET" && (url.pathname === "/live" || url.pathname === "/live/")) {
+        if (!existsSync(SITE)) return json(res, 404, { error: "The site is not built: npm run build:demo" });
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        return end(res, 200, readFileSync(SITE, "utf8"));
+      }
+      if (req.method === "POST" && url.pathname === "/v1/reply") {
+        if (!brains) return json(res, 404, { error: "This AI is not connected to a data server (DATA_URL)." });
+        if (opts.apiKey && req.headers.authorization !== `Bearer ${opts.apiKey}`) return json(res, 401, { error: "Missing or wrong API key." });
+        const body = await readJson(req);
+        const c = body?.client;
+        if (typeof body?.dataKey !== "string" || typeof body?.text !== "string" || !body.text.trim() || body.text.length > MAX_TEXT || !c || typeof c.id !== "string" || typeof c.channel !== "string")
+          return json(res, 400, { error: 'Send {"dataKey", "text", "client": {"id", "name", "channel", "handle"}}.' });
+        return json(res, 200, await brains.reply({ business: typeof body.business === "string" ? body.business : undefined, dataKey: body.dataKey, text: body.text, client: { id: c.id, name: String(c.name ?? ""), channel: c.channel, handle: c.handle ? String(c.handle) : undefined } }));
+      }
       if (req.method === "GET" && url.pathname === "/v1/model") return json(res, 200, { ...brain.info, quality: brain.report });
       if (req.method === "GET" && url.pathname === "/v1/training") return json(res, 200, brain.training());
       if (req.method === "GET" && url.pathname === "/v1/dataset") return json(res, 200, { phrases: brain.examples });
@@ -104,5 +125,5 @@ async function readJson(req: IncomingMessage): Promise<any> {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const port = Number(process.env.PORT ?? 4000);
-  createAiServer({ apiKey: process.env.VORONIX_AI_KEY || undefined }).listen(port, () => console.log(`VoroniX AI on http://localhost:${port}`));
+  createAiServer({ apiKey: process.env.VORONIX_AI_KEY || undefined, dataUrl: process.env.DATA_URL || undefined }).listen(port, () => console.log(`VoroniX AI on http://localhost:${port}`));
 }

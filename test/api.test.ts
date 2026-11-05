@@ -56,7 +56,8 @@ describe("VoroniX AI API", () => {
     const net = await (await fetch(base + "/v1/network?limit=100")).json();
     expect(net.links).toHaveLength(100);
     expect((await fetch(base + "/app.js")).headers.get("content-type")).toMatch(/javascript/);
-  });
+    // /v1/training replays 61 epochs of training on the whole dataset (about 4 to 5 s on CI).
+  }, 30_000);
 
   it("refuses a missing key, bad input and too many requests", async () => {
     expect((await post("/v1/classify", { text: "hi" })).status).toBe(401);
@@ -68,5 +69,10 @@ describe("VoroniX AI API", () => {
     let last = 200;
     for (let i = 0; i < 30; i++) last = (await post("/demo/classify", { text: "Привет" })).status;
     expect(last).toBe(429);
+  });
+
+  it("answers clients for the CRM only when it has a data server", async () => {
+    const r = await post("/v1/reply", { dataKey: "vxd_x", text: "привет", client: { id: "c1", name: "A", channel: "telegram" } }, "secret");
+    expect(r.status).toBe(404);
   });
 });
