@@ -4,7 +4,7 @@
 // the store. Every open page runs the same code on the same saved data, so
 // they all see the same AI, live.
 import type { Example, Label, Lang } from "../data.js";
-import type { IntentModel } from "../model.js";
+import type { Forward, IntentModel } from "../model.js";
 import { respond, type Outcome } from "./agent.js";
 import { parseCommand, type Command } from "./commands.js";
 import { DEMO_BUSINESS, money, nextFree, serviceName, staffName, upcoming, when } from "./crm.js";
@@ -16,7 +16,7 @@ import { newId, type Collection, type Row, type Store } from "./store.js";
 import { FADE, STARTER_KNOWLEDGE, STREAM } from "./stream.js";
 import type { Booking, Business, Channel, ClientMemory, KnowledgeEntry, LiveEvent, Phrase, QueueItem, Service, Version } from "./types.js";
 
-type Topic = "ready" | "change" | "learned" | "progress" | "error";
+type Topic = "ready" | "change" | "learned" | "progress" | "error" | "processed" | "lesson";
 type Fn = (data?: unknown) => void;
 
 export interface Incoming {
@@ -33,6 +33,26 @@ export interface Received {
   client: ClientMemory;
   learned: LearnResult[];
   queued: QueueItem[];
+}
+
+/** A message as the model saw it, for the real-time view. Sent before anything is learned from it. */
+export interface Processed {
+  name: string;
+  channel: Channel;
+  text: string;
+  fwd: Forward;
+  outcome: Outcome;
+  /** Real time it took, in milliseconds: the model alone, and the whole answer (model, knowledge, CRM). */
+  ms: { model: number; agent: number };
+  truth?: Label[];
+}
+
+/** One lesson: the phrase through the model before and after learning it. */
+export interface Lesson {
+  phrase: Phrase;
+  before: Forward;
+  after: Forward;
+  result: LearnResult;
 }
 
 export interface CommandPlan {
@@ -80,7 +100,13 @@ export class Live {
   }
 
   private emit(topic: Topic, data?: unknown) {
-    for (const fn of this.listeners.get(topic) ?? []) fn(data);
+    for (const fn of this.listeners.get(topic) ?? [])
+      try {
+        fn(data);
+      } catch (e) {
+        // The page failing to draw something must not stop the AI's work.
+        console.error(e);
+      }
   }
 
   /** Runs store work one step at a time, so two messages never write the same client at once. */
@@ -166,7 +192,16 @@ export class Live {
     return this.serial(async () => {
       const at = Date.now();
       const client = this.clientFor(input.name, input.channel, input.handle, ruleLang(input.text) ?? "ru");
+      const t0 = performance.now();
       const outcome = respond(this.ctx(), client, input.text, at);
+      const agent = performance.now() - t0;
+      if (this.listeners.get("processed")?.size) {
+        const t1 = performance.now();
+        this.learner.model.predict(input.text);
+        const model = performance.now() - t1;
+        const p: Processed = { name: outcome.client.name, channel: input.channel, text: input.text, fwd: this.learner.model.forward(input.text), outcome, ms: { model, agent }, ...(input.truth ? { truth: input.truth } : {}) };
+        this.emit("processed", p);
+      }
       if (outcome.booking) await this.saveBooking(outcome.booking);
       if (outcome.cancelled) await this.saveBooking(outcome.cancelled);
       this.clients.set(outcome.client.id, outcome.client);
@@ -210,7 +245,9 @@ export class Live {
   /** Learns a phrase now and saves it. */
   private async learnNow(p: Omit<Phrase, "id" | "at">): Promise<LearnResult> {
     const phrase: Phrase = { ...p, id: newId("p"), at: Date.now() };
+    const before = this.listeners.get("lesson")?.size ? this.learner.model.forward(p.text) : null;
     const r = this.learner.learn(phrase);
+    if (before) this.emit("lesson", { phrase, before, after: this.learner.model.forward(p.text), result: r } satisfies Lesson);
     await this.store.put("phrases", toRow(phrase));
     const best = r.before.intents[0];
     await this.log("learn", `Learned «${p.text}» → ${p.labels.join(" + ")}`, {
@@ -377,8 +414,9 @@ export class Live {
   }
 
   /** Plays the demo stream: the AI answers each client, a simulated operator checks its queue. */
-  async play(opts: { delay: number; operator: boolean; signal?: AbortSignal; onTurn?: (r: Received, d: (typeof STREAM)[number]) => void }): Promise<void> {
-    const wait = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
+  async play(opts: { delay: number; operator: boolean; signal?: AbortSignal; pace?: () => Promise<void>; onTurn?: (r: Received, d: (typeof STREAM)[number]) => void }): Promise<void> {
+    // pace: the real-time view says when the next message may come (when the person has seen this one).
+    const wait = (ms: number) => (opts.pace ? opts.pace() : new Promise<void>((ok) => setTimeout(ok, ms)));
     // Day one of the demo business: its first texts (payment, parking, being late) and a new service.
     await this.loadStarterKnowledge();
     if (!this.business.services.some((s) => s.id === FADE.id)) {

@@ -46,11 +46,11 @@ export function page(brain: Brain, opts: { live?: boolean } = {}): string {
 <div class="wrap">
 <header><div class="logo">V</div><b>VoroniX AI</b><span id="vx-model">model ${esc(brain.info.name)} v${esc(brain.info.version)}</span></header>
 <nav class="tabs" role="tablist">
-${live ? '<a href="#live" data-tab="live">Live</a><a href="#crm" data-tab="crm">CRM</a><a href="#training" data-tab="training">Training <i class="badge" id="vx-queue-badge" hidden></i></a><a href="#knowledge" data-tab="knowledge">Knowledge</a><a href="#inside" data-tab="inside">Inside the model</a><a href="#try" data-tab="try">Try it</a><a href="#data" data-tab="data">Data &amp; storage</a><a href="#api" data-tab="api">API</a>' : '<a href="#try" data-tab="try">Try it</a><a href="#inside" data-tab="inside">Inside the model</a><a href="#training" data-tab="training">Training</a><a href="#data" data-tab="data">Data &amp; storage</a><a href="#api" data-tab="api">API</a>'}
+${live ? '<a href="#live" data-tab="live">Live</a><a href="#realtime" data-tab="realtime">Real time</a><a href="#crm" data-tab="crm">CRM</a><a href="#training" data-tab="training">Training <i class="badge" id="vx-queue-badge" hidden></i></a><a href="#knowledge" data-tab="knowledge">Knowledge</a><a href="#inside" data-tab="inside">Inside the model</a><a href="#try" data-tab="try">Try it</a><a href="#data" data-tab="data">Data &amp; storage</a><a href="#api" data-tab="api">API</a>' : '<a href="#try" data-tab="try">Try it</a><a href="#inside" data-tab="inside">Inside the model</a><a href="#training" data-tab="training">Training</a><a href="#data" data-tab="data">Data &amp; storage</a><a href="#api" data-tab="api">API</a>'}
 </nav>
 
 <main>
-${live ? '<section id="tab-live" class="tab" hidden><div id="vx-live"></div></section><section id="tab-crm" class="tab" hidden><div id="vx-crm"></div></section><section id="tab-knowledge" class="tab" hidden><div id="vx-knowledge"></div></section>' : ""}
+${live ? '<section id="tab-live" class="tab" hidden><div id="vx-live"></div></section><section id="tab-realtime" class="tab" hidden><div id="vx-realtime"></div></section><section id="tab-crm" class="tab" hidden><div id="vx-crm"></div></section><section id="tab-knowledge" class="tab" hidden><div id="vx-knowledge"></div></section>' : ""}
 <section id="tab-try" class="tab"${live ? " hidden" : ""}>
 <div class="hero"><div class="stage"><canvas id="net" aria-label="The strongest connections of the trained model"></canvas>
 <div class="hero-text"><h1>Our own AI that understands salon clients</h1>

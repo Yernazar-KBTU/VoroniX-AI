@@ -34,6 +34,18 @@ export interface Prediction {
   lang_scores: Record<Lang, number>;
 }
 
+/** One message through the model, step by step (see IntentModel.forward). */
+export interface Forward {
+  /** Every feature of the message in order; index is null for a feature the model has never seen. */
+  features: { f: string; index: number | null }[];
+  /** 1 / √(number of known features): every vote is scaled by it. */
+  scale: number;
+  /** Per intent (in LABELS order): start value, the vote of every known feature, the sum z and sigmoid(z). */
+  intent: { bias: number[]; contrib: number[][]; z: number[]; score: number[] };
+  /** Per language (in LANGS order): the same, with softmax instead of sigmoid. */
+  lang: { bias: number[]; contrib: number[][]; z: number[]; p: number[] };
+}
+
 export interface ModelJson {
   version: string;
   vocab: string[];
@@ -141,6 +153,24 @@ export class IntentModel {
   weight(feature: string, label: Label): number {
     const i = this.index.get(feature);
     return i === undefined ? 0 : this.json.intent.w[LABELS.indexOf(label)][i];
+  }
+
+  /**
+   * Everything the model computes for one message, step by step, with the
+   * same arithmetic as predict(): the features, every weight × scale that
+   * reaches every intent and language, the sums and the final scores.
+   */
+  forward(text: string): Forward {
+    const feats = features(text).map((f) => ({ f, index: this.index.get(f) ?? null }));
+    const known = feats.flatMap((x) => (x.index === null ? [] : [x.index]));
+    const scale = known.length ? 1 / Math.sqrt(known.length) : 0;
+    const head = (w: number[][], b: number[]) => {
+      const contrib = w.map((row) => known.map((i) => row[i] * scale));
+      return { bias: [...b], contrib, z: b.map((bias, k) => contrib[k].reduce((s, c) => s + c, bias)) };
+    };
+    const intent = head(this.json.intent.w, this.json.intent.b);
+    const lang = head(this.json.lang.w, this.json.lang.b);
+    return { features: feats, scale, intent: { ...intent, score: intent.z.map(sigmoid) }, lang: { ...lang, p: softmax(lang.z) } };
   }
 
   /** An independent copy, so one model can learn while the other stays as it was. */

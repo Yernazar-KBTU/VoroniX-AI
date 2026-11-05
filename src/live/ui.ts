@@ -4,15 +4,18 @@
 import { LABELS, type Label, type Lang } from "../data.js";
 import { LABEL_NAMES } from "../page.js";
 import type { Brain } from "../service.js";
+import { SURE } from "./agent.js";
 import { COMMAND_EXAMPLES } from "./commands.js";
 import { makeService, money, serviceName, staffName, when } from "./crm.js";
 import { addDays, ruleLang, ymd } from "./entities.js";
 import { businessFacts } from "./knowledge.js";
+import { isRight } from "./learner.js";
 import { facts } from "./memory.js";
-import type { CommandPlan, Live } from "./runtime.js";
+import type { CommandPlan, Lesson, Live, Processed } from "./runtime.js";
 import { COLLECTIONS, type Collection } from "./store.js";
 import { STREAM } from "./stream.js";
-import type { Booking, ClientMemory, LiveEvent, QueueItem, Version } from "./types.js";
+import type { Booking, Channel, ClientMemory, LiveEvent, QueueItem, Version } from "./types.js";
+import { FlowView, type Scene } from "./viz.js";
 
 export interface Caps {
   kind: "site" | "memory";
@@ -172,7 +175,7 @@ export function createUI(brain: Brain) {
   }
 
   function placeholder() {
-    for (const id of ["vx-live", "vx-crm", "vx-training", "vx-knowledge", "vx-data"]) {
+    for (const id of ["vx-live", "vx-realtime", "vx-crm", "vx-training", "vx-knowledge", "vx-data"]) {
       const el = $(id);
       if (el && !el.dataset.mounted) el.innerHTML = failed ? `<div class="card bad">${esc(failed)}</div>` : `<div class="card loading"><span class="spin"></span>${live ? "Rebuilding the model from the saved data…" : "Connecting to the site's database…"}</div>`;
     }
@@ -182,6 +185,7 @@ export function createUI(brain: Brain) {
     header();
     if (!live || !ready) return placeholder();
     if (current === "live") renderLive();
+    else if (current === "realtime") renderRealtime();
     else if (current === "crm") renderCrm();
     else if (current === "training") renderTraining();
     else if (current === "knowledge") renderKnowledge();
@@ -247,7 +251,7 @@ export function createUI(brain: Brain) {
           e.preventDefault();
           void send();
         });
-        el.querySelector("#lv-play")!.addEventListener("click", () => void play());
+        el.querySelector("#lv-play")!.addEventListener("click", () => void play({ delay: Number(($("lv-speed") as HTMLSelectElement).value), operator: ($("lv-op") as HTMLInputElement).checked }));
         el.querySelector("#lv-chat-head")!.addEventListener("click", (e) => {
           const b = (e.target as HTMLElement).closest("[data-open]") as HTMLElement | null;
           if (!b) return;
@@ -318,26 +322,38 @@ export function createUI(brain: Brain) {
     const input = $("lv-text") as HTMLInputElement;
     const text = input.value.trim();
     if (!text) return input.focus();
-    let who = st.client ? L.clients.get(st.client) : undefined;
+    const who = st.client ? L.clients.get(st.client) : undefined;
     const nm = who?.name ?? ($("lv-name") as HTMLInputElement).value.trim();
     if (!nm) {
       toast("Give the new client a name first.");
       return $("lv-name")?.focus();
     }
-    const channel = (who?.channel ?? ($("lv-ch") as HTMLSelectElement).value) as "instagram";
-    who = who ?? L.clientFor(nm, channel);
-    st.client = who.id;
-    st.typing = who.id;
     input.value = "";
-    schedule();
-    await new Promise((ok) => setTimeout(ok, 450));
+    await sendAs(nm, (who?.channel ?? ($("lv-ch") as HTMLSelectElement).value) as Channel, text, true);
+  }
+
+  /**
+   * A message from a client, as if it came from a social network. inbox: sent from the Live
+   * inbox, which opens that client's chat and shows the AI typing; the Real time tab leaves it as it is.
+   */
+  async function sendAs(nm: string, channel: Channel, text: string, inbox = false) {
+    const L = live!;
+    if (inbox) {
+      st.client = L.clientFor(nm, channel).id;
+      st.typing = st.client;
+      schedule();
+      await new Promise((ok) => setTimeout(ok, 450));
+    }
     const r = await act(L.receive({ name: nm, channel, text }));
-    st.typing = "";
-    if (r) st.client = r.client.id;
+    if (inbox) {
+      st.typing = "";
+      if (r) st.client = r.client.id;
+    }
     schedule();
   }
 
-  async function play() {
+  /** The demo stream. pace: the real-time view lets the next message in when the person has seen this one. */
+  async function play(opts: { delay: number; operator: boolean; pace?: (signal: AbortSignal) => Promise<void> }) {
     const L = live!;
     if (st.playing) {
       st.playing.abort();
@@ -351,9 +367,10 @@ export function createUI(brain: Brain) {
     schedule();
     await act(
       L.play({
-        delay: Number(($("lv-speed") as HTMLSelectElement).value),
-        operator: ($("lv-op") as HTMLInputElement).checked,
+        delay: opts.delay,
+        operator: opts.operator,
         signal: ac.signal,
+        ...(opts.pace ? { pace: () => opts.pace!(ac.signal) } : {}),
         onTurn: (r) => {
           i++;
           st.client = r.client.id;
@@ -448,6 +465,117 @@ ${ch.length ? `<div class="ev-row w"><span class="k">Weights</span>${ch.slice(0,
     }
     if (e.kind === "retrain") return `<div class="ev retrain"><div class="ev-top"><span class="tag k-${d.status === "rejected" ? "bad" : "good"}">${d.status === "rejected" ? "kept old version" : "new version"}</span><b>${esc(e.title)}</b><small>${clock(e.at)}</small></div><div class="ev-row">Trained on ${esc(d.phrases)} learned phrases plus the start phrases, tested on ${esc(d.holdout)} phrases kept aside, ${Math.round(Number(d.ms) / 100) / 10} s.</div></div>`;
     return `<div class="ev small"><div class="ev-top"><span class="tag">${esc(e.kind)}</span><b>${esc(e.title)}</b><small>${clock(e.at)}</small></div></div>`;
+  }
+
+  // ---------------------------------------------------------------- Real time
+  // Every message and every lesson, drawn while the model computes it (viz.ts).
+  let flow: FlowView | null = null;
+  /** Scenes that came before the tab was first opened: the newest few are kept. */
+  const early: Scene[] = [];
+  const pushScene = (s: Scene) => {
+    if (flow) return flow.push(s);
+    early.push(s);
+    if (early.length > 3) early.shift();
+  };
+  const messageScene = (p: Processed): Scene => {
+    const pred = p.outcome.prediction;
+    const picked = pred.intents.map((i) => i.label);
+    return {
+      kind: "message",
+      text: p.text,
+      who: `${p.name} · ${CH[p.channel]?.[0] ?? p.channel}`,
+      fwd: p.fwd,
+      picked,
+      added: p.outcome.labels.filter((l) => !picked.includes(l)),
+      lang: pred.lang,
+      unsure: p.outcome.unsure,
+      ...(p.truth ? { truth: { ok: isRight(pred, p.truth), labels: p.truth } } : {}),
+      actions: p.outcome.actions,
+      reply: p.outcome.reply,
+      ms: p.ms,
+    };
+  };
+  const lessonScene = (x: Lesson): Scene => ({
+    kind: "lesson",
+    text: x.phrase.text,
+    who: SOURCE[x.phrase.source] ?? x.phrase.source,
+    fwd: x.before,
+    after: x.after,
+    picked: x.phrase.labels,
+    lang: x.phrase.lang,
+    why: x.phrase.why,
+    steps: x.result.steps,
+    newFeatures: x.result.newFeatures,
+  });
+  /** The model's reading of a text with nothing saved and nothing done in the CRM. */
+  const exampleScene = (text: string, who = "Example"): Scene => {
+    const m = live!.learner.model;
+    const pred = m.predict(text);
+    return { kind: "example", text, who, fwd: m.forward(text), picked: pred.intents.map((i) => i.label), lang: pred.lang, unsure: pred.intents[0].score < SURE };
+  };
+
+  function renderRealtime() {
+    const L = live!;
+    const el = mount(
+      "vx-realtime",
+      `<div class="fl-intro"><h1>Real time: how VoroniX AI thinks</h1><p class="lead">Every message and every lesson goes through the real model on this screen, step by step, as it happens.</p></div>
+<div id="fl-root"></div>
+<div class="card fl-about"><h2>How to read it</h2><ol class="fl-read">
+<li><b>Words → features.</b> The message is cut into whole words, pairs of words, word starts and pieces of 3 to 5 letters, so endings and typos still match. A filled dot is a feature the model knows. An empty ring is new to it and has no lines yet.</li>
+<li><b>Features → weights.</b> Every known feature is joined to all 13 outputs (10 intents, 3 languages) by its own weight: one line each. Green votes for, red against, brighter and thicker is stronger. A vote is weight × 1/√(number of known features).</li>
+<li><b>Sum → score.</b> Each output adds its start value and all its votes, which gives z. For an intent, sigmoid(z) is the score and the ring fills with it. Intents from 50% are taken; if none reaches 50%, the strongest from 30%, otherwise «Other». The language is a softmax over the three.</li>
+<li><b>Decision → action.</b> The intents decide the reply and what the AI does: book or cancel in the CRM, answer from the CRM data or the knowledge, or pass the chat to a person.</li>
+<li><b>Learning.</b> When the conversation proves what a message meant, or a person checks it, the error (right answer − score) runs back along the lines in yellow and every weight of the phrase moves a little. Then you see the new lines and the new scores.</li>
+</ol><p class="note small" id="fl-size"></p></div>`,
+      (root) => {
+        flow = new FlowView(root.querySelector("#fl-root")!);
+        root.querySelector("#fl-slot")!.innerHTML = `<form class="fl-form" id="fl-form" autocomplete="off"><input id="fl-name" value="Guest" maxlength="40" placeholder="Client's name" aria-label="Client's name"><select id="fl-ch" aria-label="Channel"><option value="instagram">Instagram</option><option value="telegram">Telegram</option><option value="whatsapp">WhatsApp</option></select><input id="fl-text" placeholder="Write a message as a client…" maxlength="500" aria-label="Message"><button type="submit">Send</button></form>
+<div class="fl-row"><div class="chips" id="fl-ex">${EXAMPLES.slice(0, 4).map((e) => `<button type="button" class="chip">${esc(e)}</button>`).join("")}</div><button type="button" class="fl-play" id="fl-play">▶ Play the demo stream</button><span class="note small" id="fl-prog"></span></div>`;
+        for (const s of early.splice(0)) flow.push(s);
+        if (!flow.hasScene) flow.push(exampleScene(EXAMPLES[0]));
+        const text = root.querySelector("#fl-text") as HTMLInputElement;
+        // After a send, the whole picture is brought into view if it is not.
+        const watch = () => {
+          const r = $("fl-screen")?.getBoundingClientRect();
+          if (r && r.bottom > innerHeight + 40) $("fl-screen")!.scrollIntoView({ block: "end", behavior: "smooth" });
+        };
+        const go = () => {
+          const t = text.value.trim();
+          if (!t) return text.focus();
+          text.value = "";
+          watch();
+          // Someone who may only look still sees the model work; nothing is sent or saved.
+          if (!writable()) return flow!.push(exampleScene(t, "Your message (view only: not sent)"));
+          void sendAs(($("fl-name") as HTMLInputElement).value.trim() || "Guest", ($("fl-ch") as HTMLSelectElement).value as Channel, t);
+        };
+        root.querySelector("#fl-form")!.addEventListener("submit", (e) => {
+          e.preventDefault();
+          go();
+        });
+        root.querySelector("#fl-ex")!.addEventListener("click", (e) => {
+          const b = (e.target as HTMLElement).closest(".chip");
+          if (!b) return;
+          text.value = b.textContent ?? "";
+          go();
+        });
+        // The stream waits for the picture: the next message comes when this one has been shown.
+        root.querySelector("#fl-play")!.addEventListener("click", () => {
+          if (!st.playing) watch();
+          void play({ delay: flow!.streamDelay, operator: true, pace: (signal) => flow!.settled(signal) });
+        });
+      },
+    );
+    if (!el) return;
+    flow?.setVisible(current === "realtime");
+    const playBtn = $("fl-play") as HTMLButtonElement;
+    playBtn.textContent = st.playing ? "■ Stop the stream" : "▶ Play the demo stream";
+    playBtn.disabled = !writable();
+    $("fl-prog")!.textContent = st.progress;
+    const m = L.learner.model;
+    put(
+      $("fl-size"),
+      `This is the real model, logistic regression: one layer of weights between the features and the outputs, no hidden layers. Every line is one real weight and every number is computed by the model at that moment. The whole model now: ${m.vocabularySize.toLocaleString("en")} known features × 13 outputs = ${(m.vocabularySize * 13).toLocaleString("en")} weights, plus 13 start values. A message lights up only the lines of its own features. In the demo stream a simulated operator answers the AI's queue, so you also see it learn from people.`,
+    );
   }
 
   // ---------------------------------------------------------------- CRM
@@ -917,12 +1045,15 @@ ${ch.length ? `<div class="ev-row w"><span class="k">Weights</span>${ch.slice(0,
     l.on("change", schedule);
     l.on("progress", schedule);
     l.on("learned", schedule);
+    l.on("processed", (d) => pushScene(messageScene(d as Processed)));
+    l.on("lesson", (d) => pushScene(lessonScene(d as Lesson)));
     schedule();
   }
 
   return {
     show(name: string) {
       current = name;
+      flow?.setVisible(name === "realtime");
       render();
     },
     attach,

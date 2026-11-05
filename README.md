@@ -81,9 +81,10 @@ When `VORONIX_AI_KEY` is set, `/v1/classify` and `/v1/explain` need `Authorizati
 
 `npm run build:demo` builds one HTML page (`dist-demo/index.html`) where the AI
 works and learns in the browser, with its data in a database
-(`src/live/`, about 2,800 lines). Published copy: https://claude.ai/artifact/WBotxYRsPFsCg7mkdjY1GK
+(`src/live/`, about 4,100 lines). Published copy: https://claude.ai/artifact/WBotxYRsPFsCg7mkdjY1GK
 
 - **Live**: a social inbox (Instagram, Telegram, WhatsApp). Write as a client or play the demo stream (28 clients, 56 messages with words the AI has never seen). For every message: what it understood, its reply, what it did in the CRM and what it learned. A chart compares the learning AI with the same model frozen, measured before each lesson (test-then-train).
+- **Real time**: every message and every lesson drawn while the model computes it ([`src/live/viz.ts`](src/live/viz.ts)). Left to right: the words, the features cut from them (about 100 per message), every weight that carries a feature's vote to the 10 intents and 3 languages (one line per weight, about 1,300 per message; green for, red against), the scores, and the action (reply, CRM, knowledge, a person). A lesson runs right to left: the error goes back along the lines and the weights change. Speed, pause, one step at a time, replay; pointing at a dot or an intent shows its weights and its sum. The demo stream waits for the picture, so each message is seen. Every number comes from `IntentModel.forward()`, the same arithmetic as `predict()` (tested to the last digit). The model has one layer of weights, so there are no hidden layers to draw.
 - **CRM**: the calendar the AI books into, every client's memory card (language, services, masters, times, mood, last 14 messages) and staff commands in plain words: «Запиши Алию на завтра в 15:00 на стрижку», «Cancel Bekzat's booking», «Кто не приходил 30 дней?». Writes wait for a confirm click.
 - **Training**: the review queue the AI fills itself (unsure readings, questions without an answer, complaints), teaching by hand, model versions and the learning log.
 - **Knowledge**: texts and files from the business, found with BM25. A person's answer from the queue becomes knowledge at once.

@@ -2,18 +2,20 @@
 // in the CRM, learning from conversations and rebuilding the same model on
 // every page from the saved data.
 import { describe, expect, it } from "vitest";
-import { augment, loadExamples } from "../src/data.js";
+import { augment, LABELS, LANGS, loadExamples } from "../src/data.js";
 import { score } from "../src/evaluate.js";
+import { features } from "../src/features.js";
 import { IntentModel } from "../src/model.js";
 import { COMMAND_EXAMPLES, parseCommand } from "../src/live/commands.js";
 import { DEMO_BUSINESS, freeSlots } from "../src/live/crm.js";
 import { parseDay, parseTime, sameName } from "../src/live/entities.js";
 import { Knowledge } from "../src/live/knowledge.js";
 import { isRight, Learner, SETTINGS } from "../src/live/learner.js";
-import { Live } from "../src/live/runtime.js";
+import { Live, type Lesson, type Processed } from "../src/live/runtime.js";
 import { MemoryStore } from "../src/live/store.js";
 import { STARTER_KNOWLEDGE, STREAM } from "../src/live/stream.js";
 import type { Phrase } from "../src/live/types.js";
+import { facts, picks } from "../src/live/viz.js";
 
 const seed = loadExamples();
 const start = IntentModel.train(augment(seed), SETTINGS);
@@ -220,5 +222,82 @@ describe("storage", () => {
     stop();
     expect(await store.all("knowledge")).toEqual([]);
     expect(seen.at(-1)).toBe(0);
+  });
+});
+
+describe("the real-time view", () => {
+  it("forward() is predict() step by step: the same numbers, to the last digit", () => {
+    for (const t of [...PROBES, "Сәлем! Ертең кешке фейдке жазылуға бола ма?", "qwxz zzkk", "", "Да"]) {
+      const f = start.forward(t);
+      const p = start.predict(t);
+      LABELS.forEach((l, k) => expect(f.intent.score[k]).toBe(p.scores[l]));
+      LANGS.forEach((l, k) => expect(f.lang.p[k]).toBe(p.lang_scores[l]));
+      // The view picks the intents by the same rule as the model.
+      expect(picks(f.intent.score).sort()).toEqual(p.intents.map((i) => i.label).sort());
+      const known = f.features.filter((x) => x.index !== null).length;
+      expect(f.features.map((x) => x.f)).toEqual(features(t));
+      expect(f.scale).toBe(known ? 1 / Math.sqrt(known) : 0);
+      for (const head of [f.intent, f.lang]) {
+        expect(head.contrib.every((row) => row.length === known)).toBe(true);
+        // z = the start value + every vote, added in the same order as predict() adds them.
+        head.z.forEach((z, k) => expect(z).toBe(head.contrib[k].reduce((s, c) => s + c, head.bias[k])));
+      }
+    }
+  });
+
+  it("shows on the screen the model's own numbers: features of each kind, 13 lines per known feature, the strongest votes", () => {
+    const text = "Здравствуйте! Сколько стоит стрижка? Можно в пятницу?";
+    const fwd = start.forward(text);
+    const p = start.predict(text);
+    const fc = facts({ kind: "message", text, who: "test", fwd, picked: p.intents.map((i) => i.label), lang: p.lang });
+    expect(fc.features).toBe(features(text).length);
+    expect(fc.kinds.word).toBe(7);
+    expect(Object.values(fc.kinds).reduce((a, b) => a + b, 0)).toBe(fc.features);
+    expect(fc.known + fc.unknown).toBe(fc.features);
+    expect(fc.lines).toBe(fc.known * (LABELS.length + LANGS.length));
+    expect(fc.intents.map((i) => i.score)).toEqual([...LABELS.map((l) => p.scores[l])].sort((a, b) => b - a));
+    expect(fc.langs[0].p).toBe(Math.max(...Object.values(p.lang_scores)));
+    const price = fc.intents.find((i) => i.label === "price")!;
+    expect(price.score).toBe(p.scores.price);
+    const votes = fc.votes("price");
+    expect(votes).toHaveLength(fc.known);
+    for (let i = 1; i < votes.length; i++) expect(Math.abs(votes[i - 1].v)).toBeGreaterThanOrEqual(Math.abs(votes[i].v));
+    expect(price.bias + votes.reduce((s, x) => s + x.v, 0)).toBeCloseTo(price.z, 10);
+  });
+
+  it("is told every message before anything is learned from it, and every lesson before and after", async () => {
+    const live = await open();
+    const seen: Processed[] = [];
+    const lessons: Lesson[] = [];
+    live.on("processed", (d) => seen.push(d as Processed));
+    live.on("lesson", (d) => lessons.push(d as Lesson));
+    await live.receive({ name: "Aliya", channel: "telegram", text: "Сәлем! Ертең кешке шаш қиюға жазылуға бола ма?" });
+    await live.receive({ name: "Aliya", channel: "telegram", text: "Иә, біріншісі" });
+    expect(seen.map((p) => p.text)).toEqual(["Сәлем! Ертең кешке шаш қиюға жазылуға бола ма?", "Иә, біріншісі"]);
+    for (const p of seen) {
+      LABELS.forEach((l, k) => expect(p.fwd.intent.score[k]).toBe(p.outcome.prediction.scores[l]));
+      expect(p.ms.model).toBeGreaterThanOrEqual(0);
+      expect(p.ms.agent).toBeGreaterThanOrEqual(0);
+    }
+    // The «yes» proved two phrases: the booking request and the agreement.
+    expect(lessons.map((x) => x.phrase.text)).toEqual(["Сәлем! Ертең кешке шаш қиюға жазылуға бола ма?", "Иә, біріншісі"]);
+    expect(lessons[0].phrase.labels).toContain("booking");
+    for (const x of lessons)
+      LABELS.forEach((l, k) => {
+        expect(x.before.intent.score[k]).toBe(x.result.before.scores[l]);
+        expect(x.after.intent.score[k]).toBe(x.result.after[l]);
+      });
+    // After the lesson the model reads the phrase as it was taught.
+    for (const x of lessons) for (const l of x.phrase.labels) expect(x.after.intent.score[LABELS.indexOf(l)]).toBeGreaterThanOrEqual(0.5);
+  });
+
+  it("lets the view set the pace of the demo stream", async () => {
+    const live = await open();
+    const ac = new AbortController();
+    let paced = 0;
+    await live.play({ delay: 60_000, operator: false, signal: ac.signal, pace: async () => void (++paced === 4 && ac.abort()) });
+    // The new service, then three messages, each followed by the view's pause; the long timer is never used.
+    expect(paced).toBe(4);
+    expect(live.stats().messages).toBe(3);
   });
 });

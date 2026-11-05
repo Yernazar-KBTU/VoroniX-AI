@@ -11,7 +11,7 @@ const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 // ---------- tabs ----------
 const loaded = {};
 function show() {
-  const tabs = ["try", "inside", "training", "data", "api"].concat(window.VXUI ? ["live", "crm", "knowledge"] : []);
+  const tabs = ["try", "inside", "training", "data", "api"].concat(window.VXUI ? ["live", "realtime", "crm", "knowledge"] : []);
   const first = window.VXUI ? "live" : "try";
   const tab = (location.hash || "#" + first).slice(1);
   const name = tabs.includes(tab) ? tab : first;
