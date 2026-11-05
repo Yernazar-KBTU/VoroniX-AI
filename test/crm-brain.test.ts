@@ -2,10 +2,10 @@
 // what to do, learns what conversations prove, and comes back the same after a reload.
 import { describe, expect, it } from "vitest";
 import { CrmBrain, type CrmBusiness, type CrmBooking } from "../src/crm-brain.js";
-import { loadExamples } from "../src/data.js";
+import { loadTraining } from "../src/data.js";
 import { DEMO_BUSINESS } from "../src/live/crm.js";
 
-const seed = loadExamples();
+const seed = loadTraining();
 // The business as the CRM demo keeps it: English names, its own fields.
 const business: CrmBusiness = {
   name: "Barberista",
