@@ -1,6 +1,6 @@
 # VoroniX AI
 
-Our own small AI model for the VoroniX CRM, with its own API and home page.
+Our own small AI model for the [VoroniX CRM](https://github.com/Yernazar-KBTU/VoroniX), with its own API and home page.
 It reads a message from a salon client in **Russian, Kazakh or English** and
 says what the client wants and which language they write in. The CRM's AI
 administrator uses the answer to reply, book, cancel or pass the chat to a human.
@@ -109,9 +109,31 @@ Limits: the inbox is simulated until the CRM server forwards real messages; the 
 ## Run
 
 ```bash
-npm run dev:ai        # from the repository root, http://localhost:4000
+npm install
+npm run dev           # http://localhost:4000
 npm run train         # measure on unseen phrases and update reports/metrics.json
-npm test -w apps/voronix-ai
+npm test              # 33 tests
+npm run build && npm start
 ```
 
-The service trains the model from `data/phrases.tsv` when it starts (about a second). In the CRM set `VORONIX_AI_URL=http://localhost:4000` (and `VORONIX_AI_KEY` if the service has one). On Render, `render.yaml` creates it as the second web service `voronix-ai`.
+The service trains the model from `data/phrases.tsv` when it starts (about a second). Settings: `PORT` (default 4000) and `VORONIX_AI_KEY` (when set, `/v1/classify` and `/v1/explain` need `Authorization: Bearer <key>`).
+
+`scripts/e2e-demo.cjs` needs Playwright with Chromium (`npm i -D playwright && npx playwright install chromium`).
+
+## Deploy
+
+- Docker: `docker build -t voronix-ai . && docker run -p 4000:4000 -e VORONIX_AI_KEY=... voronix-ai`
+- Render: New > Blueprint > this repository. `render.yaml` creates the free web service `voronix-ai` and generates `VORONIX_AI_KEY`.
+
+## Connect the CRM
+
+The CRM lives in [Yernazar-KBTU/VoroniX](https://github.com/Yernazar-KBTU/VoroniX). Set on the CRM:
+
+- `VORONIX_AI_URL`: this service's address, for example `https://voronix-ai-xxxx.onrender.com`
+- `VORONIX_AI_KEY`: the same key as here
+
+If the AI is configured but does not answer, the CRM sends no automatic reply: the chat gets a system message with the reason and waits for a person, and the CRM shows "VoroniX AI is DOWN".
+
+## License
+
+MIT, Altynbekov Yernazar.

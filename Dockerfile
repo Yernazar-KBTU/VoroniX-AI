@@ -1,23 +1,20 @@
-# VoroniX AI as its own web service. Build from the repository root:
-#   docker build -f apps/voronix-ai/Dockerfile -t voronix-ai .
+# VoroniX AI as a web service: docker build -t voronix-ai . && docker run -p 4000:4000 voronix-ai
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
-COPY apps/api/package.json apps/api/
-COPY apps/web/package.json apps/web/
-COPY apps/voronix-ai/package.json apps/voronix-ai/
 RUN npm ci
-COPY apps/voronix-ai apps/voronix-ai
-RUN npm run build -w apps/voronix-ai
+COPY tsconfig.json tsconfig.build.json ./
+COPY src src
+RUN npm run build
 
 FROM node:22-alpine
 ENV NODE_ENV=production PORT=4000
-WORKDIR /app/apps/voronix-ai
-COPY --from=build /app/apps/voronix-ai/package.json ./
-COPY --from=build /app/apps/voronix-ai/dist ./dist
-COPY --from=build /app/apps/voronix-ai/data ./data
-COPY --from=build /app/apps/voronix-ai/reports ./reports
-COPY --from=build /app/apps/voronix-ai/public ./public
+WORKDIR /app
+COPY package.json ./
+COPY --from=build /app/dist ./dist
+COPY data ./data
+COPY reports ./reports
+COPY public ./public
 EXPOSE 4000
 USER node
 CMD ["node", "dist/server.js"]
