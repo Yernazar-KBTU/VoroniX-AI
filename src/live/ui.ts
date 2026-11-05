@@ -446,7 +446,7 @@ export function createUI(brain: Brain) {
       const intents = (d.intents as { label: string; score: number }[]) ?? [];
       const truth = d.truth as string[] | undefined;
       const check = truth ? (d.ok ? `<span class="ok">✓ understood right</span>` : `<span class="no">✗ right answer: ${truth.map(name).join(" + ")}</span>`) : "";
-      return `<div class="ev evm"><div class="ev-top">${chan(String(d.channel))}<b>${esc(d.name)}</b><small>${clock(e.at)}</small>${d.unsure ? `<span class="tag k-unsure">unsure</span>` : ""}</div>
+      return `<div class="ev evm"><div class="ev-top">${chan(String(d.channel))}<b>${esc(d.name)}</b><small>${clock(e.at)}</small>${d.from === "crm" ? `<span class="tag k-good">from the CRM</span>` : ""}${d.unsure ? `<span class="tag k-unsure">unsure</span>` : ""}</div>
 <p class="ev-text">«${esc(d.text)}»</p>
 <div class="ev-row"><span class="k">Understood</span>${intents.map((i) => lb(i.label, i.score)).join("")} <span class="note small">${esc(LANG_NAME[String(d.lang)] ?? "")}</span> ${check}</div>
 ${((d.actions as { type: string; text: string }[]) ?? []).map((a) => `<div class="ev-row"><span class="k">${a.type === "book" || a.type === "cancel" || a.type === "offer" ? "In the CRM" : a.type === "knowledge" ? "Knowledge" : a.type === "unknown" || a.type === "handoff" ? "To a person" : "Did"}</span>${esc(a.text)}</div>`).join("")}

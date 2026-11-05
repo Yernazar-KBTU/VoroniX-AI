@@ -18,6 +18,8 @@ const api = {
     const model = await IntentModel.trainAsync(augment(seed), { ...SETTINGS, onEpoch: (e) => onProgress?.(e, SETTINGS.epochs) });
     const brain = new CrmBrain(seed, model);
     await brain.load(saved);
+    // The VoroniX AI site, open in another tab of the same site address, shows every message live.
+    brain.broadcast();
     return brain;
   },
 };

@@ -2,6 +2,7 @@
 // the visitor's browser. On claude.ai the site has its own database, so what
 // the AI learns at work is saved and every open page sees it live; anywhere
 // else it still works, but forgets everything on reload.
+import { CRM_CHANNEL, type CrmLiveMessage } from "./crm-brain.js";
 import type { Report } from "./evaluate.js";
 import { Live } from "./live/runtime.js";
 import { MemoryStore, SiteStore, type Store } from "./live/store.js";
@@ -51,6 +52,14 @@ async function boot() {
   live = new Live(store, brain.examples, undefined, brain.model);
   ui.attach(live, caps);
   await live.start();
+  // The CRM page (same site address, another tab) tells us about every message it answers.
+  if (typeof BroadcastChannel !== "undefined") {
+    const L = live;
+    new BroadcastChannel(CRM_CHANNEL).onmessage = (e: MessageEvent) => {
+      const m = e.data as CrmLiveMessage | null;
+      if (m?.v === 1 && m.type === "message" && m.processed) void L.fromCrm(m).catch((err) => console.error(err));
+    };
+  }
 }
 
 boot().catch((e) => ui.error(`VoroniX AI could not start: ${e instanceof Error ? e.message : String(e)}`));

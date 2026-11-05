@@ -18,6 +18,7 @@ import { DEMO_BUSINESS, makeService } from "./live/crm.js";
 import { Knowledge, type Hit } from "./live/knowledge.js";
 import { Learner, RETRAIN_EVERY, type LearnResult } from "./live/learner.js";
 import { newClient } from "./live/memory.js";
+import type { Forward } from "./model.js";
 import type { Booking, Business, Channel, ClientMemory, KnowledgeEntry, Phrase, Version } from "./live/types.js";
 
 /** What the brain learned, as plain JSON for the page to save. */
@@ -104,6 +105,18 @@ export interface TurnResult {
   retrain?: Promise<Version | null>;
 }
 
+/** The browser channel the VoroniX AI site listens to (same site address, other tab). */
+export const CRM_CHANNEL = "voronix-crm";
+
+/** What the CRM page tells the VoroniX AI site about one client message. */
+export interface CrmLiveMessage {
+  v: 1;
+  type: "message";
+  at: number;
+  processed: { name: string; channel: string; text: string; fwd: Forward; outcome: Outcome; ms: { model: number; agent: number } };
+  lessons: { phrase: Phrase; before: Forward; after: Forward; result: LearnResult }[];
+}
+
 const id = (p: string) => `${p}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 const channelOf = (c?: string): Channel | "crm" => {
   const k = (c ?? "").toLowerCase();
@@ -141,11 +154,21 @@ export class CrmBrain {
   retrainEvery = RETRAIN_EVERY;
   retraining = false;
   private job: Promise<Version | null> | undefined;
+  /** Tells the VoroniX AI site (open in another tab) what happened. Off where the browser has no BroadcastChannel. */
+  private channel: BroadcastChannel | null = null;
+  private watched: CrmLiveMessage["lessons"] | null = null;
   /** Called after anything the page should save. */
   onChange: (state: BrainState) => void = () => {};
 
   constructor(seed: Example[], model?: IntentModel) {
     this.learner = new Learner(seed, model);
+  }
+
+  /** Starts telling the VoroniX AI site about every message (the browser build calls this). */
+  broadcast(name = CRM_CHANNEL): void {
+    if (typeof BroadcastChannel === "undefined" || this.channel) return;
+    this.channel = new BroadcastChannel(name);
+    (this.channel as unknown as { unref?: () => void }).unref?.();
   }
 
   /** Builds the brain from the start phrases (data/phrases.tsv as text). */
@@ -216,7 +239,16 @@ export class CrmBrain {
     }));
     const known = this.clients[t.client.id];
     const client = known ? { ...known, name: t.client.name || known.name } : newClient(t.client.id, t.client.name, channelOf(t.client.channel), t.client.handle ?? "", "ru", at);
+    const t0 = performance.now();
     const outcome = respond({ model: this.model, knowledge: this.knowledge, business: b, bookings, now, newId: id }, client, t.text, at);
+    const agentMs = performance.now() - t0;
+    let live: CrmLiveMessage | null = null;
+    if (this.channel) {
+      const t1 = performance.now();
+      const fwd = this.model.forward(t.text);
+      live = { v: 1, type: "message", at, processed: { name: outcome.client.name || t.client.name, channel: channelOf(t.client.channel), text: t.text, fwd, outcome, ms: { model: performance.now() - t1, agent: agentMs } }, lessons: [] };
+      this.watched = live.lessons;
+    }
     this.clients[t.client.id] = outcome.client;
 
     const res: TurnResult = { outcome, lessons: [] };
@@ -234,6 +266,14 @@ export class CrmBrain {
       if (q.kind === "unanswered") res.question = item;
     }
     for (const l of outcome.learn) res.lessons.push(this.lesson({ text: l.text, lang: l.lang, labels: l.labels, why: l.why, source: "client", client: t.client.id }, at));
+    this.watched = null;
+    if (live && this.channel) {
+      try {
+        this.channel.postMessage(JSON.parse(JSON.stringify(live)));
+      } catch (e) {
+        console.error("VoroniX AI site was not told about the message", e);
+      }
+    }
     res.retrain = this.maybeRetrain();
     this.onChange(this.state());
     return res;
@@ -272,7 +312,11 @@ export class CrmBrain {
   }
 
   private lesson(p: Omit<Phrase, "id" | "at">, at: number): LearnResult {
-    return this.learner.learn({ ...p, id: id("ph"), at: at + this.learner.phrases.length / 1000 });
+    const phrase: Phrase = { ...p, id: id("ph"), at: at + this.learner.phrases.length / 1000 };
+    const before = this.watched ? this.model.forward(p.text) : null;
+    const r = this.learner.learn(phrase);
+    if (before && this.watched) this.watched.push({ phrase, before, after: this.model.forward(p.text), result: r });
+    return r;
   }
 
   /** Retrains in the background once enough new phrases are learned. Resolves with the new version, or null. */

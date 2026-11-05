@@ -1,7 +1,9 @@
 // The brain a CRM page uses: it answers from the CRM's own data, tells the CRM
 // what to do, learns what conversations prove, and comes back the same after a reload.
 import { describe, expect, it } from "vitest";
-import { CrmBrain, type CrmBusiness, type CrmBooking } from "../src/crm-brain.js";
+import { CrmBrain, type CrmBusiness, type CrmBooking, type CrmLiveMessage } from "../src/crm-brain.js";
+import { Live } from "../src/live/runtime.js";
+import { MemoryStore } from "../src/live/store.js";
 import { loadTraining } from "../src/data.js";
 import { DEMO_BUSINESS } from "../src/live/crm.js";
 
@@ -99,4 +101,27 @@ describe("CRM brain", () => {
     expect(["live", "rejected"]).toContain(v?.status);
     expect(b.stats().versions).toBe(1);
   }, 60_000);
+
+  it("tells the VoroniX AI site (another tab) about every message, and the site shows it", async () => {
+    const b = new CrmBrain(seed, brain.model);
+    b.broadcast("vx-test");
+    const ear = new BroadcastChannel("vx-test");
+    const got = new Promise<CrmLiveMessage>((ok) => (ear.onmessage = (e) => ok(e.data as CrmLiveMessage)));
+    b.reply({ client: { id: "t1", name: "Aidos", channel: "Telegram" }, text: "Сколько стоит VIP ритуал?", business, bookings: [], knowledge: kb, now });
+    const m = await got;
+    ear.close();
+    expect(m.processed.text).toBe("Сколько стоит VIP ритуал?");
+    expect(m.processed.channel).toBe("telegram");
+    expect(m.processed.fwd.lang).toBeDefined();
+    expect(m.processed.outcome.reply).toMatch(/22 000/);
+    const site = new Live(new MemoryStore(), seed, undefined, brain.model);
+    await site.start();
+    const drawn: unknown[] = [];
+    site.on("processed", (d) => drawn.push(d));
+    await site.fromCrm(m);
+    expect(drawn.length).toBe(1);
+    const ev = site.events.at(-1)!;
+    expect(ev.kind).toBe("message");
+    expect(ev.detail).toMatchObject({ from: "crm", name: "Aidos", text: "Сколько стоит VIP ритуал?" });
+  });
 });
