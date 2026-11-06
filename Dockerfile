@@ -8,6 +8,7 @@ COPY src src
 COPY scripts scripts
 COPY data data
 COPY reports reports
+COPY public public
 # The server, and the VoroniX AI site it shows at /live.
 RUN npm run build && npm run build:demo
 
