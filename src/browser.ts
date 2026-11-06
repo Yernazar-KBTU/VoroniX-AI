@@ -2,7 +2,9 @@
 // the visitor's browser. On claude.ai the site has its own database, so what
 // the AI learns at work is saved and every open page sees it live; anywhere
 // else it still works, but forgets everything on reload.
-import { CRM_CHANNEL, CRM_RECENT, type CrmLiveMessage } from "./crm-brain.js";
+import { AI_RECENT, CRM_CHANNEL, CRM_RECENT, type AiSiteMessage, type CrmLiveMessage } from "./crm-brain.js";
+import { serviceName, staffName } from "./live/crm.js";
+import type { Outcome } from "./live/agent.js";
 import type { Report } from "./evaluate.js";
 import { Live } from "./live/runtime.js";
 import { ServerStore } from "./live/server-store.js";
@@ -103,6 +105,34 @@ async function boot() {
         for (const m of JSON.parse(e.newValue) as CrmLiveMessage[]) if (m?.v === 1 && m.processed) void L.fromCrm(m).catch((err) => console.error(err));
       } catch (err) {
         console.error(err);
+      }
+    });
+  }
+  // Messages this page answers itself go to the CRM page too (same browser): it shows them as test chats.
+  if (shared) {
+    const L = live;
+    L.on("handled", (d) => {
+      const { at, input, outcome } = d as { at: number; input: { name: string; channel: string; text: string }; outcome: Outcome };
+      const b = outcome.booking ?? outcome.cancelled;
+      const m: AiSiteMessage = {
+        id: `ai-${at}-${Math.random().toString(36).slice(2, 6)}`,
+        at,
+        client: outcome.client.id,
+        name: outcome.client.name || input.name,
+        channel: input.channel,
+        text: input.text,
+        reply: outcome.reply,
+        lang: outcome.lang,
+        intents: outcome.prediction.intents.map((i) => ({ label: i.label, score: Math.round(i.score * 100) / 100 })),
+        unsure: outcome.unsure,
+        ...(b ? { booking: { id: b.id, serviceId: b.service, staffId: b.staff, service: serviceName(L.business, b.service, "ru"), staff: staffName(L.business, b.staff), start: b.start, minutes: b.minutes, price: b.price, cancelled: b.status === "cancelled" } } : {}),
+      };
+      try {
+        const list = JSON.parse(localStorage.getItem(AI_RECENT) ?? "[]") as AiSiteMessage[];
+        list.push(m);
+        localStorage.setItem(AI_RECENT, JSON.stringify(list.slice(-80)));
+      } catch (e) {
+        console.error("The CRM page was not told about the message", e);
       }
     });
   }

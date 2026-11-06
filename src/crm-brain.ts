@@ -109,6 +109,21 @@ export interface TurnResult {
 export const CRM_CHANNEL = "voronix-crm";
 /** localStorage key with the CRM's last messages, for a VoroniX AI page opened later. */
 export const CRM_RECENT = "vx-crm-recent";
+/** Messages the VoroniX AI site answered by itself (the CRM page shows them as test chats). */
+export const AI_RECENT = "vx-ai-recent";
+export interface AiSiteMessage {
+  id: string;
+  at: number;
+  client: string;
+  name: string;
+  channel: string;
+  text: string;
+  reply: string;
+  lang: string;
+  intents: { label: string; score: number }[];
+  unsure: boolean;
+  booking?: { id: string; serviceId: string; staffId: string; service: string; staff: string; start: string; minutes: number; price: number; cancelled: boolean };
+}
 
 /** What the CRM page tells the VoroniX AI site about one client message. */
 export interface CrmLiveMessage {
