@@ -32,7 +32,7 @@ function merge(into: Record<string, unknown>, data: Record<string, unknown>): Re
 }
 
 export class MemoryStore implements Store {
-  readonly kind = "memory" as const;
+  readonly kind: "site" | "memory" = "memory";
   private data = new Map<string, Map<string, Row>>();
   private listeners = new Map<string, Set<Listener>>();
 
@@ -154,3 +154,96 @@ let counter = 0;
 /** Short unique ids that fit the database's path rules (letters, digits, - and _). */
 /** Ids sort in the order they were made (time, then a counter), so phrases are replayed in the order they were learned. */
 export const newId = (prefix: string, at = Date.now()) => `${prefix}-${at.toString(36)}-${(counter++ % 1679616).toString(36).padStart(4, "0")}${Math.random().toString(36).slice(2, 6)}`;
+
+/**
+ * One database for the VoroniX AI site and the CRM page in the same browser
+ * (both live on the same site address): every collection is kept in
+ * localStorage under "vx-db:<collection>", survives reloads, and a change made
+ * by any tab (the CRM page, another AI tab) reaches the others at once.
+ */
+export class LocalStore extends MemoryStore {
+  readonly kind = "site" as const;
+  private loaded = new Set<string>();
+
+  constructor(private readonly ls: Storage = localStorage, win: Pick<Window, "addEventListener"> | null = typeof window === "undefined" ? null : window) {
+    super();
+    win?.addEventListener("storage", (e: StorageEvent) => {
+      if (!e.key?.startsWith(LocalStore.PREFIX)) return;
+      void this.reload(e.key.slice(LocalStore.PREFIX.length) as Collection);
+    });
+  }
+
+  static readonly PREFIX = "vx-db:";
+
+  private read(c: string): Record<string, Row> {
+    try {
+      return JSON.parse(this.ls.getItem(LocalStore.PREFIX + c) ?? "{}") as Record<string, Row>;
+    } catch {
+      return {};
+    }
+  }
+
+  private write(c: string, fn: (rows: Record<string, Row>) => void) {
+    const rows = this.read(c);
+    fn(rows);
+    try {
+      this.ls.setItem(LocalStore.PREFIX + c, JSON.stringify(rows));
+    } catch (e) {
+      console.error("VoroniX AI could not save", c, e);
+    }
+  }
+
+  private async ensure(c: Collection) {
+    if (this.loaded.has(c)) return;
+    this.loaded.add(c);
+    for (const row of Object.values(this.read(c))) await super.put(c, row);
+  }
+
+  /** Brings a collection in line with what another tab saved. */
+  private async reload(c: Collection) {
+    if (!this.loaded.has(c)) return;
+    const saved = this.read(c);
+    const mine = await super.all(c);
+    for (const row of mine) if (!saved[row.id]) await super.remove(c, row.id);
+    for (const row of Object.values(saved)) {
+      const cur = mine.find((r) => r.id === row.id);
+      if (!cur || JSON.stringify(cur) !== JSON.stringify(row)) await super.put(c, row);
+    }
+  }
+
+  async all(c: Collection): Promise<Row[]> {
+    await this.ensure(c);
+    return super.all(c);
+  }
+
+  async put(c: Collection, row: Row): Promise<void> {
+    await this.ensure(c);
+    await super.put(c, row);
+    this.write(c, (rows) => void (rows[row.id] = JSON.parse(JSON.stringify(row)) as Row));
+  }
+
+  async patch(c: Collection, id: string, data: Record<string, unknown>): Promise<void> {
+    await this.ensure(c);
+    await super.patch(c, id, data);
+    const row = (await super.all(c)).find((r) => r.id === id);
+    if (row) this.write(c, (rows) => void (rows[id] = row));
+  }
+
+  async remove(c: Collection, id: string): Promise<void> {
+    await this.ensure(c);
+    await super.remove(c, id);
+    this.write(c, (rows) => void delete rows[id]);
+  }
+
+  watch(c: Collection, cb: Parameters<Store["watch"]>[1]): () => void {
+    let off = () => {};
+    let stop = false;
+    void this.ensure(c).then(() => {
+      if (!stop) off = super.watch(c, cb);
+    });
+    return () => {
+      stop = true;
+      off();
+    };
+  }
+}

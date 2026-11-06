@@ -107,6 +107,8 @@ export interface TurnResult {
 
 /** The browser channel the VoroniX AI site listens to (same site address, other tab). */
 export const CRM_CHANNEL = "voronix-crm";
+/** localStorage key with the CRM's last messages, for a VoroniX AI page opened later. */
+export const CRM_RECENT = "vx-crm-recent";
 
 /** What the CRM page tells the VoroniX AI site about one client message. */
 export interface CrmLiveMessage {
@@ -270,6 +272,13 @@ export class CrmBrain {
     if (live && this.channel) {
       try {
         this.channel.postMessage(JSON.parse(JSON.stringify(live)));
+        try {
+          const recent = JSON.parse(localStorage.getItem(CRM_RECENT) ?? "[]") as CrmLiveMessage[];
+          recent.push(live);
+          localStorage.setItem(CRM_RECENT, JSON.stringify(recent.slice(-30)));
+        } catch {
+          /* private window or full storage: the live channel still works */
+        }
       } catch (e) {
         console.error("VoroniX AI site was not told about the message", e);
       }
