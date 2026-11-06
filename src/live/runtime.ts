@@ -276,8 +276,8 @@ export class Live {
    */
   fromCrm(m: CrmLiveMessage, opts: { quiet?: boolean } = {}): Promise<void> {
     return this.serial(async () => {
-      // Already saved (another tab, or replayed after a reload): nothing new to show.
-      if (opts.quiet && this.events.some((x) => x.id === `crm-${m.at}`)) return;
+      // Already shown (it came by both ways, from another tab, or replayed after a reload).
+      if (this.events.some((x) => x.id === `crm-${m.at}`)) return;
       const p = m.processed;
       const outcome = p.outcome;
       if (!opts.quiet) this.emit("processed", { name: p.name, channel: p.channel as Channel, text: p.text, fwd: p.fwd, outcome, ms: p.ms } satisfies Processed);
