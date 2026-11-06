@@ -93,6 +93,19 @@ async function boot() {
     };
   }
   // Messages the CRM answered while this page was closed (the CRM keeps the last ones).
+  // The same list is also the second way in while this page is open: some browsers
+  // (or a CRM tab loaded before an update) do not deliver the channel message.
+  if (shared && typeof window !== "undefined") {
+    const L = live;
+    window.addEventListener("storage", (e: StorageEvent) => {
+      if (e.key !== CRM_RECENT || !e.newValue) return;
+      try {
+        for (const m of JSON.parse(e.newValue) as CrmLiveMessage[]) if (m?.v === 1 && m.processed) void L.fromCrm(m).catch((err) => console.error(err));
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  }
   if (shared) {
     try {
       const recent = JSON.parse(localStorage.getItem(CRM_RECENT) ?? "[]") as CrmLiveMessage[];
