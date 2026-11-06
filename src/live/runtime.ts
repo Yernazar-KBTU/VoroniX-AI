@@ -17,7 +17,7 @@ import { newId, type Collection, type Row, type Store } from "./store.js";
 import { FADE, STARTER_KNOWLEDGE, STREAM } from "./stream.js";
 import type { Booking, Business, Channel, ClientMemory, KnowledgeEntry, LiveEvent, Phrase, QueueItem, Service, Version } from "./types.js";
 
-type Topic = "ready" | "change" | "learned" | "progress" | "error" | "processed" | "lesson";
+type Topic = "ready" | "change" | "learned" | "progress" | "error" | "processed" | "lesson" | "handled";
 type Fn = (data?: unknown) => void;
 
 export interface Incoming {
@@ -265,6 +265,8 @@ export class Live {
         ...(truth ? { truth, ok: isRight(outcome.prediction, truth), frozenOk: isRight(this.learner.frozen.predict(input.text), truth) } : {}),
       });
       this.maybeRetrain();
+      // A message this page answered itself (Live inbox, demo stream, API): the CRM page shows it too.
+      this.emit("handled", { at, input: { name: input.name, channel: input.channel, text: input.text }, outcome });
       return { outcome, client: outcome.client, learned, queued };
     });
   }
