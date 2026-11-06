@@ -188,6 +188,8 @@ export class Live {
 
   private remote(e: LiveEvent) {
     if (e.kind !== "message" || !this.listeners.get("processed")?.size || Date.now() - e.at > 60_000) return;
+    // CRM messages reach every open tab directly (fromCrm), so they are drawn there already.
+    if (e.id.startsWith("crm-")) return;
     const d = (e.detail ?? {}) as Record<string, any>;
     if (typeof d.text !== "string") return;
     const t0 = performance.now();
@@ -197,8 +199,10 @@ export class Live {
     this.emit("processed", { name: String(d.name ?? ""), channel: d.channel as Channel, text: d.text, fwd: this.learner.model.forward(d.text), outcome, ms: { model, agent: model } } satisfies Processed);
   }
 
-  private async log(kind: LiveEvent["kind"], title: string, detail?: Record<string, unknown>): Promise<LiveEvent> {
-    const e: LiveEvent = { id: newId("ev"), at: Date.now(), kind, title, ...(detail ? { detail: JSON.parse(JSON.stringify(detail)) } : {}) };
+  private async log(kind: LiveEvent["kind"], title: string, detail?: Record<string, unknown>, id?: string): Promise<LiveEvent> {
+    const known = id ? this.events.find((x) => x.id === id) : undefined;
+    if (known) return known;
+    const e: LiveEvent = { id: id ?? newId("ev"), at: Date.now(), kind, title, ...(detail ? { detail: JSON.parse(JSON.stringify(detail)) } : {}) };
     this.mine.add(e.id);
     this.events.push(e);
     await this.store.put("events", toRow(e));
@@ -270,11 +274,13 @@ export class Live {
    * CrmBrain.broadcast). Shown in the live feed and drawn in Real time. The
    * CRM keeps its own brain: nothing here is learned or saved in the CRM.
    */
-  fromCrm(m: CrmLiveMessage): Promise<void> {
+  fromCrm(m: CrmLiveMessage, opts: { quiet?: boolean } = {}): Promise<void> {
     return this.serial(async () => {
+      // Already saved (another tab, or replayed after a reload): nothing new to show.
+      if (opts.quiet && this.events.some((x) => x.id === `crm-${m.at}`)) return;
       const p = m.processed;
       const outcome = p.outcome;
-      this.emit("processed", { name: p.name, channel: p.channel as Channel, text: p.text, fwd: p.fwd, outcome, ms: p.ms } satisfies Processed);
+      if (!opts.quiet) this.emit("processed", { name: p.name, channel: p.channel as Channel, text: p.text, fwd: p.fwd, outcome, ms: p.ms } satisfies Processed);
       await this.log("message", `${p.name}: ${p.text}`, {
         from: "crm",
         name: p.name,
@@ -289,9 +295,9 @@ export class Live {
         learned: m.lessons.length,
         queued: outcome.queue.map((q) => q.kind),
         ...(outcome.hit ? { source: outcome.hit.entry.title } : {}),
-      });
-      for (const x of m.lessons) {
-        this.emit("lesson", x satisfies Lesson);
+      }, `crm-${m.at}`);
+      for (const [k, x] of m.lessons.entries()) {
+        if (!opts.quiet) this.emit("lesson", x satisfies Lesson);
         const r = x.result;
         const best = r.before.intents[0];
         await this.log("learn", `The CRM learned «${x.phrase.text}» → ${x.phrase.labels.join(" + ")}`, {
@@ -307,7 +313,7 @@ export class Live {
           after: Object.fromEntries(x.phrase.labels.map((l) => [l, Math.round(r.after[l] * 1000) / 1000])),
           was: Object.fromEntries(x.phrase.labels.map((l) => [l, Math.round(r.before.scores[l] * 1000) / 1000])),
           changes: r.changes.slice(0, 6).map((c) => ({ f: c.feature, l: c.label, from: Math.round(c.from * 1000) / 1000, to: Math.round(c.to * 1000) / 1000 })),
-        });
+        }, `crm-${m.at}-l${k}`);
       }
     });
   }
